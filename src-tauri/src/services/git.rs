@@ -41,9 +41,25 @@ fn read_head(repo_path: &PathBuf) -> Option<String> {
     if content.starts_with("ref: ") {
         let ref_path = content.trim().strip_prefix("ref: ")?;
         let full_ref_path = repo_path.join(".git").join(ref_path);
-        std::fs::read_to_string(full_ref_path)
-            .ok()
-            .map(|s| s.trim().to_string())
+
+        // 개별 ref 파일 먼저 시도
+        if let Ok(hash) = std::fs::read_to_string(&full_ref_path) {
+            return Some(hash.trim().to_string());
+        }
+
+        // packed-refs에서 찾기 (git gc 이후 또는 빈 레포)
+        let packed_refs = repo_path.join(".git").join("packed-refs");
+        if let Ok(packed) = std::fs::read_to_string(&packed_refs) {
+            for line in packed.lines() {
+                if line.starts_with('#') { continue; }
+                let parts: Vec<&str> = line.splitn(2, ' ').collect();
+                if parts.len() == 2 && parts[1] == ref_path {
+                    return Some(parts[0].to_string());
+                }
+            }
+        }
+
+        None
     } else {
         Some(content.trim().to_string())
     }
