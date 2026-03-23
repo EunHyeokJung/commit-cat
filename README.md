@@ -14,17 +14,20 @@ CommitCat lives on your desktop, watches your development environment locally, a
 
 ### Core
 - 🐾 Desktop pet with pixel-art sprites — walks, sits, sleeps, and celebrates
-- 👣 Menu bar / system tray companion
+- 👣 Menu bar / system tray companion (streak tooltip)
 - 🖱️ Draggable — place it anywhere on your screen
 - 💬 Click to chat (speech bubble reactions with personality)
+- 💬 Random coding messages — cat reacts while you code
 - 🎨 Multi-color cat (orange / brown / white)
 - 💤 Sleeps when you're away
+- 🖥️ Fullscreen-aware — auto-hides when you go fullscreen
 
 ### Coding Activity
 - 🐙 Local Git commit & push tracking — reacts every time you commit
 - 💻 IDE detection — knows when you're coding (VS Code, JetBrains, Xcode, and more)
 - 🌙 Late-night coding awareness
 - 🌱 XP & level system — grows with your activity
+- 🔥 Streak system — 3/7/30-day milestones with bonus XP
 - ✨ Pixel-art level-up animation with burst particles
 
 ### Focus & Productivity
@@ -35,6 +38,7 @@ CommitCat lives on your desktop, watches your development environment locally, a
 - 🐙 GitHub integration — PR open/merge XP, star notifications
 - 🤖 Claude AI chat — double-click the cat to chat with your AI companion (Anthropic API)
 - 🔔 macOS Notification Center — system notifications for key events
+- 🔄 Auto-update checker — notifies when a new version is available
 
 ### Settings
 - ⚙️ Settings panel — manage watched repos, cat color, timer durations, API keys, and XP progress
@@ -55,6 +59,9 @@ CommitCat gains XP from:
 | Pomodoro complete | +20 XP |
 | GitHub PR opened | +20 XP |
 | GitHub PR merged | +30 XP |
+| 3-day streak | +50 XP |
+| 7-day streak | +100 XP |
+| 30-day streak | +500 XP |
 
 Level up formula: **Level n → n+1 requires n × 100 XP**
 
