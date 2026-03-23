@@ -6,3 +6,4 @@ pub mod git;
 pub mod settings;
 pub mod fullscreen;
 pub mod xp;
+pub mod ai;

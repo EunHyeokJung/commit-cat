@@ -26,6 +26,9 @@ export function Settings() {
   const [cloneError, setCloneError] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [xp, setXp] = useState<XpStatus>({ level: 1, currentExp: 0, expToNext: 100 });
+  const [aiKey, setAiKey] = useState("");
+  const [aiKeySaved, setAiKeySaved] = useState(false);
+  const [aiSaving, setAiSaving] = useState(false);
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -33,13 +36,14 @@ export function Settings() {
       try {
         const [repoList, settings, xpStatus] = await Promise.all([
           invoke<string[]>("get_watched_repos"),
-          invoke<{ catColor?: CatColor; pomodoroMinutes?: number; breakMinutes?: number }>("get_settings"),
+          invoke<{ catColor?: CatColor; pomodoroMinutes?: number; breakMinutes?: number; anthropicApiKey?: string | null }>("get_settings"),
           invoke<XpStatus>("get_xp_status"),
         ]);
         setRepos(repoList);
         if (settings.catColor) setCatColor(settings.catColor);
         if (settings.pomodoroMinutes) setFocusMinutes(settings.pomodoroMinutes);
         if (settings.breakMinutes) setBreakMinutes(settings.breakMinutes);
+        if (settings.anthropicApiKey) setAiKeySaved(true);
         setXp(xpStatus);
       } catch (e) {
         console.error("Failed to load settings:", e);
@@ -158,6 +162,33 @@ export function Settings() {
       await invoke("update_settings", { settings: { ...current, breakMinutes: clamped } });
     } catch (e) {
       console.error("Failed to update break minutes:", e);
+    }
+  }, []);
+
+  // AI API Key 저장
+  const handleAiSave = useCallback(async () => {
+    if (!aiKey.trim()) return;
+    setAiSaving(true);
+    try {
+      const current = await invoke<Record<string, unknown>>("get_settings");
+      await invoke("update_settings", { settings: { ...current, anthropicApiKey: aiKey.trim() } });
+      setAiKeySaved(true);
+      setAiKey("");
+    } catch (e) {
+      console.error("Failed to save AI key:", e);
+    } finally {
+      setAiSaving(false);
+    }
+  }, [aiKey]);
+
+  // AI API Key 삭제
+  const handleAiRemove = useCallback(async () => {
+    try {
+      const current = await invoke<Record<string, unknown>>("get_settings");
+      await invoke("update_settings", { settings: { ...current, anthropicApiKey: null } });
+      setAiKeySaved(false);
+    } catch (e) {
+      console.error("Failed to remove AI key:", e);
     }
   }, []);
 
@@ -283,6 +314,41 @@ export function Settings() {
             <button className="settings__stepper-btn" onClick={() => handleBreakChange(breakMinutes + 1)}>+</button>
           </div>
         </div>
+      </section>
+
+      {/* AI */}
+      <section className="settings__section">
+        <h2 className="settings__section-title">AI</h2>
+        {aiKeySaved ? (
+          <div className="settings__github-status">
+            <span>Anthropic API key saved</span>
+            <button
+              className="settings__github-btn settings__github-btn--disconnect"
+              onClick={handleAiRemove}
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <div className="settings__github-row">
+            <input
+              className="settings__github-input"
+              type="password"
+              placeholder="Anthropic API Key"
+              value={aiKey}
+              onChange={e => setAiKey(e.target.value)}
+              disabled={aiSaving}
+              onKeyDown={e => e.key === "Enter" && handleAiSave()}
+            />
+            <button
+              className="settings__github-btn settings__github-btn--connect"
+              onClick={handleAiSave}
+              disabled={aiSaving || !aiKey.trim()}
+            >
+              {aiSaving ? "..." : "Save"}
+            </button>
+          </div>
+        )}
       </section>
 
       {/* Clone Modal */}

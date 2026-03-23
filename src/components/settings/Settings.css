@@ -441,3 +441,84 @@
   min-width: 50px;
   text-align: center;
 }
+
+/* ── GitHub / AI shared styles ── */
+
+.settings__github-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings__github-input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: "SF Mono", "Menlo", "Monaco", monospace;
+  color: #333;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.settings__github-input:focus {
+  border-color: #999;
+}
+
+.settings__github-input:disabled {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.settings__github-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.settings__github-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.settings__github-btn--connect {
+  background: #333;
+  color: #fff;
+}
+
+.settings__github-btn--connect:hover:not(:disabled) {
+  background: #444;
+}
+
+.settings__github-btn--disconnect {
+  background: #f0f0f0;
+  color: #555;
+}
+
+.settings__github-btn--disconnect:hover:not(:disabled) {
+  background: #e5e5e5;
+}
+
+.settings__github-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #16a34a;
+}
+
+.settings__github-error {
+  font-size: 12px;
+  color: #e55;
+  margin-top: 8px;
+}

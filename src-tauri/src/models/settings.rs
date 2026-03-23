@@ -29,6 +29,9 @@ pub struct AppSettings {
     pub night_hour_end: u32,
     /// 등록된 Git 저장소 경로들
     pub git_repos: Vec<String>,
+    /// Anthropic API key (AI 채팅)
+    #[serde(default)]
+    pub anthropic_api_key: Option<String>,
 }
 
 fn default_break_minutes() -> u32 { 5 }
@@ -48,6 +51,7 @@ impl Default for AppSettings {
             night_hour_start: 23,
             night_hour_end: 6,
             git_repos: vec![],
+            anthropic_api_key: None,
         }
     }
 }

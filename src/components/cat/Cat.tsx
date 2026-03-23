@@ -55,6 +55,13 @@ export function Cat() {
   const bubbleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clickCount = useRef(0);
   const clickResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const singleClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── AI 채팅 ──
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatInputRef = useRef<HTMLInputElement>(null);
 
   // ── 레벨업 연출 ──
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -400,33 +407,103 @@ export function Cat() {
   // ══════════════════════════════════════
   const sleepAnnoyedMessages = ["zzz... stop...", "let me sleep...", "5 more minutes...", "go away..."];
 
-  const handleClick = async () => {
+  const handleClick = () => {
     if (didDrag.current) return;
-    try { await invoke<string>("click_cat"); } catch (_) {}
+    // 더블클릭과 구분하기 위해 약간 지연
+    if (singleClickTimer.current) clearTimeout(singleClickTimer.current);
+    singleClickTimer.current = setTimeout(async () => {
+      try { await invoke<string>("click_cat"); } catch (_) {}
 
-    // sleep 중 클릭: 잠깐 눈 뜨고 다시 잠들기
-    if (behavior === "sleep") {
-      sleepClickCount.current += 1;
-      if (sleepClickCount.current >= 5) {
-        const msg = sleepAnnoyedMessages[Math.floor(Math.random() * sleepAnnoyedMessages.length)];
-        showBubble(msg);
-      } else {
-        showBubble("...mrrp?", 1500);
+      // sleep 중 클릭: 잠깐 눈 뜨고 다시 잠들기
+      if (behavior === "sleep") {
+        sleepClickCount.current += 1;
+        if (sleepClickCount.current >= 5) {
+          const msg = sleepAnnoyedMessages[Math.floor(Math.random() * sleepAnnoyedMessages.length)];
+          showBubble(msg);
+        } else {
+          showBubble("...mrrp?", 1500);
+        }
+        setBehavior("sit");
+        if (sleepWakeTimer.current) clearTimeout(sleepWakeTimer.current);
+        sleepWakeTimer.current = setTimeout(() => setBehavior("sleep"), 2000);
+        return;
       }
-      // 눈 뜨기 (sit) -> 2초 후 다시 잠들기 (sleep)
-      setBehavior("sit");
-      if (sleepWakeTimer.current) clearTimeout(sleepWakeTimer.current);
-      sleepWakeTimer.current = setTimeout(() => setBehavior("sleep"), 2000);
+
+      clickCount.current += 1;
+      const count = clickCount.current;
+      if (clickResetTimer.current) clearTimeout(clickResetTimer.current);
+      clickResetTimer.current = setTimeout(() => { clickCount.current = 0; }, 3000);
+      const msgs = count <= 2 ? normalMessages : count <= 5 ? happyMessages : annoyedMessages;
+      showBubble(msgs[Math.floor(Math.random() * msgs.length)]);
+    }, 250);
+  };
+
+  // ══════════════════════════════════════
+  // AI 채팅
+  // ══════════════════════════════════════
+  const openChat = useCallback(async () => {
+    if (chatOpen || chatLoading) return;
+    try {
+      const settings = await invoke<{ anthropicApiKey?: string | null }>("get_settings");
+      if (!settings.anthropicApiKey) {
+        showBubble("set API key in settings first~", 3000);
+        return;
+      }
+    } catch (_) {
+      showBubble("mrrp? something went wrong...", 2000);
       return;
     }
+    await appWindow.current.setSize(new LogicalSize(220, 180));
+    setChatOpen(true);
+    setChatInput("");
+    setTimeout(() => chatInputRef.current?.focus(), 100);
+  }, [chatOpen, chatLoading, showBubble]);
 
-    clickCount.current += 1;
-    const count = clickCount.current;
-    if (clickResetTimer.current) clearTimeout(clickResetTimer.current);
-    clickResetTimer.current = setTimeout(() => { clickCount.current = 0; }, 3000);
-    const msgs = count <= 2 ? normalMessages : count <= 5 ? happyMessages : annoyedMessages;
-    showBubble(msgs[Math.floor(Math.random() * msgs.length)]);
-  };
+  const closeChat = useCallback(async () => {
+    setChatOpen(false);
+    setChatInput("");
+    await appWindow.current.setSize(new LogicalSize(WIN_W, 150));
+  }, []);
+
+  const sendChat = useCallback(async () => {
+    const msg = chatInput.trim();
+    if (!msg || chatLoading) return;
+    setChatLoading(true);
+    setChatOpen(false);
+    setChatInput("");
+    await appWindow.current.setSize(new LogicalSize(WIN_W, 150));
+    showBubble("thinking...", 30000);
+    try {
+      const response = await invoke<string>("chat_with_cat", { message: msg });
+      showBubble(response, 5000);
+    } catch (e) {
+      console.error("chat_with_cat error:", e);
+      showBubble("mrrp... can't think right now~", 3000);
+    } finally {
+      setChatLoading(false);
+    }
+  }, [chatInput, chatLoading, showBubble]);
+
+  const handleChatKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendChat();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      closeChat();
+    }
+  }, [sendChat, closeChat]);
+
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    if (didDrag.current) return;
+    // 싱글클릭 타이머 취소
+    if (singleClickTimer.current) {
+      clearTimeout(singleClickTimer.current);
+      singleClickTimer.current = null;
+    }
+    openChat();
+  }, [openChat]);
 
   // ══════════════════════════════════════
   // 렌더
@@ -484,6 +561,7 @@ export function Cat() {
         className={`cat ${isDragging ? "cat--dragging" : ""} ${catState !== "idle" ? `cat--${catState}` : ""}`}
         onMouseDown={handleMouseDown}
         onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
         onContextMenu={handleContextMenu}
       >
         <div
@@ -522,6 +600,28 @@ export function Cat() {
           <button className="cat-context-menu__item" onClick={openSettings}>Settings</button>
           <div className="cat-context-menu__separator" />
           <button className="cat-context-menu__item cat-context-menu__item--quit" onClick={handleQuit}>Quit</button>
+        </div>
+      )}
+      {chatOpen && (
+        <div className="cat-chat" onMouseDown={(e) => e.stopPropagation()}>
+          <input
+            ref={chatInputRef}
+            className="cat-chat__input"
+            type="text"
+            placeholder="talk to me~"
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyDown={handleChatKeyDown}
+            onBlur={() => setTimeout(() => closeChat(), 150)}
+            maxLength={200}
+          />
+          <button
+            className="cat-chat__btn"
+            onClick={sendChat}
+            disabled={!chatInput.trim()}
+          >
+            &#x2191;
+          </button>
         </div>
       )}
     </div>

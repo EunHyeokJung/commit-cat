@@ -60,6 +60,16 @@ pub fn run() {
                 tray.set_menu(Some(menu))?;
                 tray.set_show_menu_on_left_click(false)?;
 
+                // Streak 정보로 트레이 툴팁 설정
+                if let Ok(data) = services::storage::load(&app_handle) {
+                    let streak = data.cat.streak_days;
+                    if streak > 0 {
+                        let _ = tray.set_tooltip(Some(&format!("CommitCat — {} day streak", streak)));
+                    } else {
+                        let _ = tray.set_tooltip(Some("CommitCat"));
+                    }
+                }
+
                 // 좌클릭: 고양이 보이기/숨기기
                 tray.on_tray_icon_event(|tray, event| {
                     if let tauri::tray::TrayIconEvent::Click {
@@ -153,6 +163,9 @@ pub fn run() {
             // XP
             commands::xp::get_xp_status,
             commands::xp::add_xp,
+            commands::xp::get_streak_info,
+            // AI
+            commands::ai::chat_with_cat,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Commit Cat");
