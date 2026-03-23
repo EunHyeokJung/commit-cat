@@ -1,4 +1,13 @@
 use crate::services;
+use tauri::AppHandle;
+
+#[tauri::command]
+pub async fn clone_repo(app: AppHandle, url: String, path: String) -> Result<bool, String> {
+    git2::Repository::clone(&url, &path)
+        .map_err(|e| format!("Clone failed: {}", e))?;
+    services::storage::add_repo(&app, &path)?;
+    Ok(true)
+}
 
 #[tauri::command]
 pub async fn get_today_commits(app: tauri::AppHandle) -> Result<u32, String> {

@@ -146,6 +146,7 @@ pub fn run() {
             commands::git::register_repo,
             commands::git::get_watched_repos,
             commands::git::remove_repo,
+            commands::git::clone_repo,
             // Settings
             commands::settings::get_settings,
             commands::settings::update_settings,

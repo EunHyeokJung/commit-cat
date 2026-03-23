@@ -29,6 +29,7 @@ chrono = { version = "0.4", features = ["serde"] }
 notify = "7"           # File system watcher (for git HEAD changes)
 directories = "5"      # Cross-platform app data paths
 tokio = { version = "1", features = ["full"] }
+git2 = "0.20"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.26"

@@ -101,7 +101,11 @@
   color: #e55;
 }
 
-/* ── Add Repo Button ── */
+/* ── Add Repo Button + Dropdown ── */
+
+.settings__repo-add-wrap {
+  position: relative;
+}
 
 .settings__repo-add {
   width: 100%;
@@ -119,6 +123,179 @@
 .settings__repo-add:hover {
   border-color: #bbb;
   color: #555;
+}
+
+.settings__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.settings__dropdown-item {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.settings__dropdown-item:hover {
+  background: #f3f3f3;
+}
+
+.settings__dropdown-item + .settings__dropdown-item {
+  border-top: 1px solid #f0f0f0;
+}
+
+/* ── Clone Modal ── */
+
+.settings__modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.settings__modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.settings__modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.settings__modal-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.settings__modal-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: "SF Mono", "Menlo", "Monaco", monospace;
+  color: #333;
+  margin-bottom: 14px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.settings__modal-input:focus {
+  border-color: #999;
+}
+
+.settings__modal-input:disabled {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.settings__modal-path-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.settings__modal-path-row .settings__modal-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings__modal-choose {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f5f5f5;
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.settings__modal-choose:hover {
+  background: #eee;
+}
+
+.settings__modal-choose:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.settings__modal-error {
+  font-size: 12px;
+  color: #e55;
+  margin-bottom: 14px;
+  padding: 8px 10px;
+  background: #fef2f2;
+  border-radius: 6px;
+}
+
+.settings__modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.settings__modal-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.settings__modal-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.settings__modal-btn--cancel {
+  background: #f0f0f0;
+  color: #555;
+}
+
+.settings__modal-btn--cancel:hover:not(:disabled) {
+  background: #e5e5e5;
+}
+
+.settings__modal-btn--primary {
+  background: #333;
+  color: #fff;
+}
+
+.settings__modal-btn--primary:hover:not(:disabled) {
+  background: #444;
 }
 
 /* ── Cat Color Picker ── */
