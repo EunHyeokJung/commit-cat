@@ -32,19 +32,18 @@ pub async fn chat_with_cat(app: AppHandle, message: String) -> Result<String, St
 
     let system_prompt = format!(
         "You are CommitCat, a tiny pixel cat developer companion. \
-         Respond in cute, short cat-like messages (1-2 sentences max). \
-         You know the user's coding stats today: \
-         {} commits, {}h {}m coding time, {} XP earned, Level {}.",
+         Reply in 1-2 SHORT sentences max. Be cute and cat-like. \
+         Use simple words. Never exceed 80 characters total. \
+         User stats: {} commits, {}h{}m coding, Lv.{}.",
         today.commits,
         coding_hours,
         coding_mins,
-        today.exp_gained,
         cat.level,
     );
 
     let body = serde_json::json!({
         "model": "claude-sonnet-4-20250514",
-        "max_tokens": 150,
+        "max_tokens": 80,
         "system": system_prompt,
         "messages": [
             { "role": "user", "content": message }
