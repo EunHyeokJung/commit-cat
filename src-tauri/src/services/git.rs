@@ -11,8 +11,7 @@ pub async fn start_watcher(app: AppHandle) {
     loop {
         interval.tick().await;
 
-        // TODO: storage에서 등록된 repo 목록 가져오기
-        let repos: Vec<PathBuf> = vec![];
+        let repos = super::storage::get_watched_repos(&app);
 
         for repo in repos {
             if let Some(current_head) = read_head(&repo) {

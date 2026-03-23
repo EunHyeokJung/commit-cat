@@ -56,3 +56,31 @@ pub fn cleanup_history(data: &mut AppData) {
         data.history.truncate(90);
     }
 }
+
+/// 등록된 Git 저장소 목록 반환
+pub fn get_watched_repos(app: &AppHandle) -> Vec<PathBuf> {
+    load(app)
+        .map(|data| {
+            data.settings
+                .git_repos
+                .iter()
+                .map(PathBuf::from)
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Git 저장소 등록 (중복 무시)
+pub fn add_repo(app: &AppHandle, path: &str) -> Result<(), String> {
+    let mut data = load(app)?;
+    let canonical = std::fs::canonicalize(path)
+        .map_err(|e| format!("Invalid path: {}", e))?
+        .to_string_lossy()
+        .to_string();
+
+    if !data.settings.git_repos.contains(&canonical) {
+        data.settings.git_repos.push(canonical);
+        save(app, &data)?;
+    }
+    Ok(())
+}

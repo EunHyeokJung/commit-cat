@@ -15,7 +15,7 @@ const annoyedMessages = ["...meow.", "okay okay!", "I'm busy!", "stahp!"];
 type Behavior = "walk" | "stand" | "sit" | "sleep";
 
 export function Cat() {
-  const { catColor, setCatColor } = useCatStore();
+  const { catColor, setCatColor, state: catState } = useCatStore();
   const appWindow = useRef(getCurrentWindow());
 
   // 트레이 메뉴에서 고양이 색상 변경 이벤트 수신
@@ -49,8 +49,26 @@ export function Cat() {
   const sleepClickCount = useRef(0);
   const sleepWakeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 행동 전환: walk <-> stand <-> sit <-> sleep
+  // catState 변경 → 행동 오버라이드
   useEffect(() => {
+    if (catState === "coding" || catState === "tired") setBehavior("sit");
+    else if (catState === "sleeping") setBehavior("sleep");
+    else if (catState === "celebrating") {
+      setBehavior("stand");
+      // 3초 후 자동 복귀 (store가 아직 celebrating이면 idle로)
+      const id = setTimeout(() => {
+        const current = useCatStore.getState().state;
+        if (current === "celebrating") useCatStore.getState().setState("idle");
+      }, 3000);
+      return () => clearTimeout(id);
+    } else if (catState === "frustrated") setBehavior("stand");
+    // "idle" / "interaction" → 기존 자체 사이클 유지
+  }, [catState]);
+
+  // 행동 전환: walk <-> stand <-> sit <-> sleep (idle일 때만)
+  useEffect(() => {
+    if (catState !== "idle" && catState !== "interaction") return;
+
     let duration: number;
     let next: Behavior;
 
@@ -98,7 +116,7 @@ export function Cat() {
       }
     }, duration);
     return () => clearTimeout(id);
-  }, [behavior]);
+  }, [behavior, catState]);
 
   // ══════════════════════════════════════
   // 걷기 프레임: walk일 때만 stand/walk 교차
@@ -255,7 +273,7 @@ export function Cat() {
         )}
       </div>
       <div
-        className={`cat ${isDragging ? "cat--dragging" : ""}`}
+        className={`cat ${isDragging ? "cat--dragging" : ""} ${catState !== "idle" ? `cat--${catState}` : ""}`}
         onMouseDown={handleMouseDown}
         onClick={handleClick}
       >
@@ -270,7 +288,7 @@ export function Cat() {
             draggable={false}
           />
         </div>
-        {behavior === "sleep" && hasSit && <div className="cat__zzz" style={direction === "right" ? { left: "auto", right: "5px" } : undefined}>z z z</div>}
+        {(behavior === "sleep" || catState === "sleeping") && hasSit && <div className="cat__zzz" style={direction === "right" ? { left: "auto", right: "5px" } : undefined}>z z z</div>}
       </div>
     </div>
   );

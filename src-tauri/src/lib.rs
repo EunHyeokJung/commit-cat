@@ -98,6 +98,12 @@ pub fn run() {
                 services::activity::start_monitor(monitor_handle).await;
             });
 
+            // Git 커밋 감지 시작
+            let git_handle = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                services::git::start_watcher(git_handle).await;
+            });
+
             Ok(())
         })
         // ── Commands (frontend ↔ backend) ──

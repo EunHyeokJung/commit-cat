@@ -1,4 +1,5 @@
 use serde::Serialize;
+use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
 
@@ -36,6 +37,9 @@ pub async fn start_monitor(app: AppHandle) {
         if is_ide_running && !was_ide_running {
             let ide_name = detected_ide.clone().unwrap_or("IDE".to_string());
             let _ = app.emit("activity:ide-detected", &ide_name);
+
+            // IDE 감지 시 워크스페이스에서 git repo 자동 등록
+            auto_register_repos(&app);
         } else if !is_ide_running && was_ide_running {
             let _ = app.emit("activity:ide-closed", "");
         }
@@ -193,4 +197,129 @@ fn detect_running_ide_unix() -> Option<String> {
     }
 
     None
+}
+
+/// IDE 프로세스의 cwd에서 git repo를 찾아 자동 등록
+fn auto_register_repos(app: &AppHandle) {
+    let pids = get_ide_pids();
+    for pid in pids {
+        if let Some(cwd) = get_process_cwd(pid) {
+            if let Some(repo_root) = find_git_root(&cwd) {
+                let _ = super::storage::add_repo(app, &repo_root.to_string_lossy());
+            }
+        }
+    }
+}
+
+/// 실행 중인 IDE 프로세스의 PID 목록
+fn get_ide_pids() -> Vec<u32> {
+    #[cfg(target_os = "macos")]
+    { get_ide_pids_macos() }
+
+    #[cfg(target_os = "windows")]
+    { vec![] } // Windows는 lsof 없어서 수동 등록으로
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    { get_ide_pids_linux() }
+}
+
+#[cfg(target_os = "macos")]
+fn get_ide_pids_macos() -> Vec<u32> {
+    let output = match std::process::Command::new("ps")
+        .args(["-A", "-o", "pid=,args="])
+        .output()
+    {
+        Ok(o) => o,
+        Err(_) => return vec![],
+    };
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let ide_patterns = [
+        "Visual Studio Code.app", "Cursor.app", "Windsurf.app",
+        "IntelliJ IDEA", "WebStorm", "PyCharm", "GoLand", "CLion",
+        "RustRover", "Xcode.app", "Zed.app",
+    ];
+
+    let mut pids = vec![];
+    for line in stdout.lines() {
+        let trimmed = line.trim();
+        if ide_patterns.iter().any(|p| trimmed.contains(p)) {
+            if let Some(pid_str) = trimmed.split_whitespace().next() {
+                if let Ok(pid) = pid_str.parse::<u32>() {
+                    pids.push(pid);
+                }
+            }
+        }
+    }
+    pids
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+fn get_ide_pids_linux() -> Vec<u32> {
+    let output = match std::process::Command::new("ps")
+        .args(["-A", "-o", "pid=,args="])
+        .output()
+    {
+        Ok(o) => o,
+        Err(_) => return vec![],
+    };
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let ide_patterns = ["/code", "/cursor", "idea", "webstorm", "pycharm", "goland", "clion", "rustrover"];
+
+    let mut pids = vec![];
+    for line in stdout.lines() {
+        let trimmed = line.trim();
+        if ide_patterns.iter().any(|p| trimmed.contains(p)) {
+            if let Some(pid_str) = trimmed.split_whitespace().next() {
+                if let Ok(pid) = pid_str.parse::<u32>() {
+                    pids.push(pid);
+                }
+            }
+        }
+    }
+    pids
+}
+
+/// 프로세스의 현재 작업 디렉토리 추출
+fn get_process_cwd(pid: u32) -> Option<PathBuf> {
+    #[cfg(target_os = "macos")]
+    {
+        let output = std::process::Command::new("lsof")
+            .args(["-p", &pid.to_string(), "-d", "cwd", "-Fn"])
+            .output()
+            .ok()?;
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        // lsof 출력: "p<pid>\nn<path>"
+        for line in stdout.lines() {
+            if let Some(path) = line.strip_prefix('n') {
+                if path != "/" {
+                    return Some(PathBuf::from(path));
+                }
+            }
+        }
+        None
+    }
+
+    #[cfg(target_os = "windows")]
+    { let _ = pid; None }
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    {
+        // Linux: /proc/<pid>/cwd symlink
+        std::fs::read_link(format!("/proc/{}/cwd", pid)).ok()
+    }
+}
+
+/// 디렉토리에서 위로 올라가며 .git 폴더 탐색
+fn find_git_root(start: &PathBuf) -> Option<PathBuf> {
+    let mut current = start.clone();
+    loop {
+        if current.join(".git").exists() {
+            return Some(current);
+        }
+        if !current.pop() {
+            return None;
+        }
+    }
 }
