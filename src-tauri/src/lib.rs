@@ -54,6 +54,7 @@ pub fn run() {
             if let Some(tray) = app.tray_by_id("main-tray") {
                 let menu = MenuBuilder::new(app)
                     .text("settings", "Settings...")
+                    .text("check-update", "Check for Updates")
                     .separator()
                     .text("quit", "Quit")
                     .build()?;
@@ -111,6 +112,12 @@ pub fn run() {
                                 .build();
                             }
                         }
+                        "check-update" => {
+                            let handle = app.clone();
+                            tauri::async_runtime::spawn(async move {
+                                let _ = services::update::check_update(&handle).await;
+                            });
+                        }
                         "quit" => { app.exit(0); }
                         _ => {}
                     }
@@ -133,6 +140,12 @@ pub fn run() {
             let gh_handle = app_handle.clone();
             tauri::async_runtime::spawn(async move {
                 services::github::start_github_watcher(gh_handle).await;
+            });
+
+            // 업데이트 체크 시작
+            let update_handle = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                services::update::start_update_checker(update_handle).await;
             });
 
             Ok(())
@@ -173,6 +186,8 @@ pub fn run() {
             // GitHub
             commands::github::verify_github_token,
             commands::github::disconnect_github,
+            // Update
+            commands::update::check_for_update,
             // AI
             commands::ai::chat_with_cat,
         ])

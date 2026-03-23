@@ -96,6 +96,8 @@ pub struct AppData {
     pub history: Vec<super::activity::DailySummary>,
     #[serde(default)]
     pub github_state: GitHubState,
+    #[serde(default)]
+    pub last_update_check: Option<String>,
 }
 
 /// 고양이 영구 데이터 (레벨/경험치)
@@ -132,6 +134,7 @@ impl Default for AppData {
             today: super::activity::DailySummary::default(),
             history: vec![],
             github_state: GitHubState::default(),
+            last_update_check: None,
         }
     }
 }

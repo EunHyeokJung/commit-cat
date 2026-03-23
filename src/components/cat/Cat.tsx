@@ -102,6 +102,15 @@ export function Cat() {
     return () => { unlisten.then(fn => fn()); };
   }, [showBubble, setCatState]);
 
+  // ── 업데이트 알림 수신 ──
+  useEffect(() => {
+    const unlisten = listen<{ latestVersion: string }>("update:available", (event) => {
+      showBubble(`new version v${event.payload.latestVersion}!`, 5000);
+      notify("CommitCat", `New version v${event.payload.latestVersion} available!`);
+    });
+    return () => { unlisten.then(fn => fn()); };
+  }, [showBubble]);
+
   // ── 포모도로 tick ──
   useEffect(() => {
     if (!pomodoroActive || pomodoroPaused) return;
