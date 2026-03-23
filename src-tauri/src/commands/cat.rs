@@ -1,4 +1,5 @@
 use crate::models::cat::CatInfo;
+use tauri::AppHandle;
 
 /// 고양이 현재 상태 조회
 #[tauri::command]
@@ -19,4 +20,11 @@ pub async fn get_cat_state() -> Result<CatInfo, String> {
 pub async fn click_cat() -> Result<String, String> {
     // TODO: 상태를 Interaction으로 전환, 반응 애니메이션 트리거
     Ok("meow!".to_string())
+}
+
+/// 앱 종료
+#[tauri::command]
+pub async fn quit_app(app: AppHandle) -> Result<(), String> {
+    app.exit(0);
+    Ok(())
 }

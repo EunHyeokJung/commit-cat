@@ -1,5 +1,15 @@
 use serde::{Deserialize, Serialize};
 
+/// 개별 활동 이벤트
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityEvent {
+    pub timestamp: String,
+    pub event_type: String,
+    pub xp: u32,
+    pub detail: String,
+}
+
 /// 오늘 하루 요약
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -9,6 +19,8 @@ pub struct DailySummary {
     pub commits: u32,
     pub pomodoro_sessions: u32,
     pub exp_gained: u32,
+    #[serde(default)]
+    pub events: Vec<ActivityEvent>,
 }
 
 /// 실시간 코딩 상태

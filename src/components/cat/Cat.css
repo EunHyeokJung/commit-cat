@@ -366,3 +366,52 @@
 @keyframes pb-bottom-left  { 0% { opacity:1; transform:translate(0,0) scale(1); } 70% { opacity:1; } 100% { opacity:0; transform:translate(-28px, 28px) scale(0.3); } }
 @keyframes pb-bottom       { 0% { opacity:1; transform:translate(0,0) scale(1); } 70% { opacity:1; } 100% { opacity:0; transform:translate(0, 40px) scale(0.3); } }
 @keyframes pb-bottom-right { 0% { opacity:1; transform:translate(0,0) scale(1); } 70% { opacity:1; } 100% { opacity:0; transform:translate(28px, 28px) scale(0.3); } }
+
+/* ══════════════════════════════════════
+   컨텍스트 메뉴
+   ══════════════════════════════════════ */
+
+.cat-context-menu {
+  position: fixed;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 140px;
+  z-index: 9999;
+  animation: menu-pop 0.12s ease-out;
+}
+
+@keyframes menu-pop {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.cat-context-menu__item {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #333;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.cat-context-menu__item:hover {
+  background: #f0f0f0;
+}
+
+.cat-context-menu__item--quit {
+  color: #e53935;
+}
+
+.cat-context-menu__separator {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 4px 0;
+}

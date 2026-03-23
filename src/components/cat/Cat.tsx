@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { LogicalPosition } from "@tauri-apps/api/dpi";
 import { listen } from "@tauri-apps/api/event";
 import { useCatStore } from "../../stores/catStore";
@@ -56,6 +57,62 @@ export function Cat() {
       return () => clearTimeout(timer);
     }
   }, [levelUp, clearLevelUp]);
+
+  // ── 컨텍스트 메뉴 ──
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  // 외부 클릭 시 메뉴 닫기
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleClick = () => setContextMenu(null);
+    window.addEventListener("mousedown", handleClick);
+    return () => window.removeEventListener("mousedown", handleClick);
+  }, [contextMenu]);
+
+  const openSummary = useCallback(async () => {
+    setContextMenu(null);
+    const existing = await WebviewWindow.getByLabel("summary");
+    if (existing) {
+      await existing.setFocus();
+      return;
+    }
+    new WebviewWindow("summary", {
+      url: "/",
+      title: "Today's Report",
+      width: 400,
+      height: 500,
+      center: true,
+      resizable: false,
+    });
+  }, []);
+
+  const openSettings = useCallback(async () => {
+    setContextMenu(null);
+    const existing = await WebviewWindow.getByLabel("settings");
+    if (existing) {
+      await existing.setFocus();
+      return;
+    }
+    new WebviewWindow("settings", {
+      url: "/",
+      title: "CommitCat Settings",
+      width: 500,
+      height: 600,
+      center: true,
+      resizable: false,
+    });
+  }, []);
+
+  const handleQuit = useCallback(async () => {
+    setContextMenu(null);
+    await invoke("quit_app");
+  }, []);
 
   // ── 행동 ──
   const [behavior, setBehavior] = useState<Behavior>("walk");
@@ -296,6 +353,7 @@ export function Cat() {
         className={`cat ${isDragging ? "cat--dragging" : ""} ${catState !== "idle" ? `cat--${catState}` : ""}`}
         onMouseDown={handleMouseDown}
         onClick={handleClick}
+        onContextMenu={handleContextMenu}
       >
         <div
           className="cat__sprite"
@@ -317,6 +375,19 @@ export function Cat() {
           </div>
         )}
       </div>
+      {contextMenu && (
+        <div
+          ref={menuRef}
+          className="cat-context-menu"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <button className="cat-context-menu__item" onClick={openSummary}>Today</button>
+          <button className="cat-context-menu__item" onClick={openSettings}>Settings</button>
+          <div className="cat-context-menu__separator" />
+          <button className="cat-context-menu__item cat-context-menu__item--quit" onClick={handleQuit}>Quit</button>
+        </div>
+      )}
     </div>
   );
 }

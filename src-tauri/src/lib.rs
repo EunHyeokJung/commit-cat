@@ -126,8 +126,10 @@ pub fn run() {
             // Cat state
             commands::cat::get_cat_state,
             commands::cat::click_cat,
+            commands::cat::quit_app,
             // Activity
             commands::activity::get_today_summary,
+            commands::activity::get_today_events,
             commands::activity::get_coding_status,
             // Growth
             commands::growth::get_level_info,

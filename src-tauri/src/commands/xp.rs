@@ -1,5 +1,7 @@
+use crate::models::activity::ActivityEvent;
 use crate::models::growth::{exp_for_level, LevelInfo};
 use crate::services::storage;
+use chrono::Local;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
@@ -31,6 +33,15 @@ pub async fn add_xp(app: AppHandle, amount: u32, source: String) -> Result<AddXp
     data.cat.exp += amount;
     let mut leveled_up = false;
 
+    // 이벤트 기록
+    let now = Local::now().format("%H:%M").to_string();
+    data.today.events.push(ActivityEvent {
+        timestamp: now.clone(),
+        event_type: source.clone(),
+        xp: amount,
+        detail: source.clone(),
+    });
+
     // 레벨업 루프
     loop {
         let needed = exp_for_level(data.cat.level);
@@ -41,6 +52,17 @@ pub async fn add_xp(app: AppHandle, amount: u32, source: String) -> Result<AddXp
         } else {
             break;
         }
+    }
+
+    // 레벨업 이벤트 기록
+    if leveled_up {
+        let now = Local::now().format("%H:%M").to_string();
+        data.today.events.push(ActivityEvent {
+            timestamp: now,
+            event_type: "level_up".to_string(),
+            xp: 0,
+            detail: format!("Lv.{}", data.cat.level),
+        });
     }
 
     // source별 통계 업데이트

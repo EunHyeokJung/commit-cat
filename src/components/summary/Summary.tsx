@@ -1,7 +1,142 @@
-// TODO: 하루 요약 패널 (v2)
-// - 코딩 시간 그래프
-// - 커밋 히스토리
-// - 뽀모도로 성공/실패
-// - 레벨/EXP 진행률
-// - 주간 heatmap
-export {};
+import { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import "./Summary.css";
+
+interface ActivityEvent {
+  timestamp: string;
+  eventType: string;
+  xp: number;
+  detail: string;
+}
+
+interface DailySummary {
+  codingMinutes: number;
+  commits: number;
+  expGained: number;
+}
+
+interface XpStatus {
+  level: number;
+  currentExp: number;
+  expToNext: number;
+}
+
+const eventText: Record<string, string> = {
+  commit: "i noticed a commit! \ud83d\udc3e",
+  push: "pushed to remote! \ud83d\ude80",
+  coding_hour: "a whole hour of coding! \ud83d\udcaa",
+  late_night: "still coding at night... \ud83c\udf19",
+  level_up: "LEVEL UP! {detail} \ud83c\udf89",
+};
+
+function formatEvent(ev: ActivityEvent): string {
+  const template = eventText[ev.eventType] || ev.detail;
+  return template.replace("{detail}", ev.detail);
+}
+
+function formatMinutes(m: number): string {
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  const rem = m % 60;
+  return rem > 0 ? `${h}h ${rem}m` : `${h}h`;
+}
+
+export function Summary() {
+  const [events, setEvents] = useState<ActivityEvent[]>([]);
+  const [summary, setSummary] = useState<DailySummary | null>(null);
+  const [xp, setXp] = useState<XpStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [ev, sum, xpStatus] = await Promise.all([
+          invoke<ActivityEvent[]>("get_today_events"),
+          invoke<DailySummary>("get_today_summary"),
+          invoke<XpStatus>("get_xp_status"),
+        ]);
+        setEvents(ev);
+        setSummary(sum);
+        setXp(xpStatus);
+      } catch (e) {
+        console.error("Failed to load summary:", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return <div className="summary__loading">loading...</div>;
+  }
+
+  return (
+    <div className="summary">
+      {/* Header */}
+      <div className="summary__header">
+        <img
+          className="summary__cat-sprite"
+          src="/assets/cat/brown_stand.png"
+          alt="cat"
+        />
+        <div className="summary__speech">
+          here's your day, hooman!
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div className="summary__timeline">
+        <div className="summary__timeline-title">today's log</div>
+        {events.length === 0 ? (
+          <div className="summary__empty">
+            no activity yet today...<br />
+            go make some commits! \ud83d\udc3e
+          </div>
+        ) : (
+          events.map((ev, i) => (
+            <div key={i} className={`summary__event summary__event--${ev.eventType}`}>
+              <span className="summary__event-time">{ev.timestamp}</span>
+              <div className="summary__event-body">
+                <div className="summary__event-text">{formatEvent(ev)}</div>
+                {ev.xp > 0 && (
+                  <div className="summary__event-xp">+{ev.xp} xp</div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Stats */}
+      {summary && (
+        <>
+          <hr className="summary__divider" />
+          <div className="summary__stats">
+            <div className="summary__stat">
+              <span className="summary__stat-icon">{"\ud83d\udc3e"}</span>
+              <span className="summary__stat-label">Commits</span>
+              <span className="summary__stat-value">{summary.commits}</span>
+            </div>
+            <div className="summary__stat">
+              <span className="summary__stat-icon">{"\ud83d\udcbb"}</span>
+              <span className="summary__stat-label">Coding</span>
+              <span className="summary__stat-value">{formatMinutes(summary.codingMinutes)}</span>
+            </div>
+            <div className="summary__stat">
+              <span className="summary__stat-icon">{"\u2b50"}</span>
+              <span className="summary__stat-label">XP</span>
+              <span className="summary__stat-value">+{summary.expGained}</span>
+            </div>
+            {xp && (
+              <div className="summary__stat">
+                <span className="summary__stat-icon">{"\ud83c\udf1f"}</span>
+                <span className="summary__stat-label">Level</span>
+                <span className="summary__stat-value">Lv.{xp.level}</span>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
