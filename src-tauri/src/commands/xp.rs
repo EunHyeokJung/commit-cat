@@ -156,6 +156,13 @@ pub async fn add_xp(app: AppHandle, amount: u32, source: String) -> Result<AddXp
 
     storage::save(&app, &data)?;
 
+    // 트레이 툴팁 streak 업데이트
+    if let Some(tray) = app.tray_by_id("main-tray") {
+        if data.cat.streak_days > 0 {
+            let _ = tray.set_tooltip(Some(&format!("CommitCat — {} day streak", data.cat.streak_days)));
+        }
+    }
+
     if leveled_up {
         let _ = app.emit("xp:level-up", result.level);
     }
