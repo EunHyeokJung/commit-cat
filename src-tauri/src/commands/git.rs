@@ -3,8 +3,13 @@ use tauri::AppHandle;
 
 #[tauri::command]
 pub async fn clone_repo(app: AppHandle, url: String, path: String) -> Result<bool, String> {
-    git2::Repository::clone(&url, &path)
-        .map_err(|e| format!("Clone failed: {}", e))?;
+    let clone_path = path.clone();
+    tokio::task::spawn_blocking(move || {
+        git2::Repository::clone(&url, &clone_path)
+            .map_err(|e| format!("Clone failed: {}", e))
+    })
+    .await
+    .map_err(|e| format!("Task failed: {}", e))??;
     services::storage::add_repo(&app, &path)?;
     Ok(true)
 }

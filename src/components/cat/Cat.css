@@ -96,7 +96,7 @@
 }
 
 .cat__image--brown.cat__image--sit {
-  height: calc(72px * 1.12 * 0.9);
+  height: calc(72px * 1.12);
   margin-bottom: 2px;
 }
 
@@ -111,6 +111,7 @@
 
 /* 걷기: JS에서 stand/walk 프레임 교차 + 윈도우 이동으로 처리 */
 
+/*
 .cat--idle.cat--sit .cat__image {
   animation: sit-idle 3s ease-in-out infinite;
 }
@@ -160,11 +161,13 @@
   25% { transform: translateX(-2px); }
   75% { transform: translateX(2px); }
 }
+*/
 
 /* ══════════════════════════════════════
    상태별 애니메이션
    ══════════════════════════════════════ */
 
+/*
 .cat--coding .cat__image {
   animation: coding-focus 0.5s ease-in-out infinite;
 }
@@ -201,6 +204,7 @@
   0% { transform: translateY(0); }
   100% { transform: translateY(-3px); }
 }
+*/
 
 /* ══════════════════════════════════════
    이펙트
