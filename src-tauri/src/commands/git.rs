@@ -20,3 +20,15 @@ pub async fn register_repo(app: tauri::AppHandle, path: String) -> Result<bool, 
         Err("Not a valid git repository".to_string())
     }
 }
+
+#[tauri::command]
+pub async fn get_watched_repos(app: tauri::AppHandle) -> Result<Vec<String>, String> {
+    let repos = services::storage::get_watched_repos(&app);
+    Ok(repos.iter().map(|p| p.to_string_lossy().to_string()).collect())
+}
+
+#[tauri::command]
+pub async fn remove_repo(app: tauri::AppHandle, path: String) -> Result<bool, String> {
+    services::storage::remove_repo(&app, &path)?;
+    Ok(true)
+}

@@ -36,6 +36,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_dialog::init())
         // ── State ──
         .setup(|app| {
             let app_handle = app.handle().clone();
@@ -56,6 +57,8 @@ pub fn run() {
                     .text("cat-brown", "Brown")
                     .text("cat-orange", "Orange")
                     .text("cat-white", "White")
+                    .separator()
+                    .text("settings", "Settings...")
                     .separator()
                     .text("quit", "Quit")
                     .build()?;
@@ -86,6 +89,23 @@ pub fn run() {
                         "cat-orange" => { let _ = app.emit("change-cat-color", "orange"); }
                         "cat-brown" => { let _ = app.emit("change-cat-color", "brown"); }
                         "cat-white" => { let _ = app.emit("change-cat-color", "white"); }
+                        "settings" => {
+                            // 이미 열려있으면 포커스, 아니면 새로 생성
+                            if let Some(win) = app.get_webview_window("settings") {
+                                let _ = win.set_focus();
+                            } else {
+                                let _ = tauri::webview::WebviewWindowBuilder::new(
+                                    app,
+                                    "settings",
+                                    tauri::WebviewUrl::App("/".into()),
+                                )
+                                .title("CommitCat Settings")
+                                .inner_size(500.0, 600.0)
+                                .center()
+                                .resizable(false)
+                                .build();
+                            }
+                        }
                         "quit" => { app.exit(0); }
                         _ => {}
                     }
@@ -124,6 +144,8 @@ pub fn run() {
             // Git
             commands::git::get_today_commits,
             commands::git::register_repo,
+            commands::git::get_watched_repos,
+            commands::git::remove_repo,
             // Settings
             commands::settings::get_settings,
             commands::settings::update_settings,

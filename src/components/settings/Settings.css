@@ -1,0 +1,174 @@
+/* CommitCat Settings Panel */
+
+.settings {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 32px 28px;
+  color: #333;
+}
+
+.settings__loading {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+.settings__title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 28px;
+}
+
+/* ── Section ── */
+
+.settings__section {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #eee;
+}
+
+.settings__section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.settings__section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 14px;
+}
+
+/* ── Repo List ── */
+
+.settings__repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.settings__repo-empty {
+  font-size: 13px;
+  color: #aaa;
+  padding: 16px;
+  text-align: center;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.settings__repo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.settings__repo-item:hover {
+  background: #eee;
+}
+
+.settings__repo-path {
+  font-size: 13px;
+  font-family: "SF Mono", "Menlo", "Monaco", monospace;
+  color: #444;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.settings__repo-remove {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #ccc;
+  cursor: pointer;
+  padding: 0 4px;
+  margin-left: 8px;
+  line-height: 1;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.settings__repo-remove:hover {
+  color: #e55;
+}
+
+/* ── Add Repo Button ── */
+
+.settings__repo-add {
+  width: 100%;
+  padding: 10px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  background: none;
+  color: #888;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.settings__repo-add:hover {
+  border-color: #bbb;
+  color: #555;
+}
+
+/* ── Cat Color Picker ── */
+
+.settings__color-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.settings__color-label {
+  font-size: 14px;
+  color: #555;
+}
+
+.settings__color-options {
+  display: flex;
+  gap: 10px;
+}
+
+.settings__color-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.settings__color-btn:hover {
+  transform: scale(1.1);
+}
+
+.settings__color-btn--active {
+  border-color: #333;
+}
+
+.settings__color-btn--brown {
+  background: #8B6914;
+}
+
+.settings__color-btn--orange {
+  background: #E8881C;
+}
+
+.settings__color-btn--white {
+  background: #f0f0f0;
+  border-color: #ddd;
+}
+
+.settings__color-btn--white.settings__color-btn--active {
+  border-color: #333;
+}

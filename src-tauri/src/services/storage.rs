@@ -70,6 +70,14 @@ pub fn get_watched_repos(app: &AppHandle) -> Vec<PathBuf> {
         .unwrap_or_default()
 }
 
+/// Git 저장소 삭제
+pub fn remove_repo(app: &AppHandle, path: &str) -> Result<(), String> {
+    let mut data = load(app)?;
+    data.settings.git_repos.retain(|r| r != path);
+    save(app, &data)?;
+    Ok(())
+}
+
 /// Git 저장소 등록 (중복 무시)
 pub fn add_repo(app: &AppHandle, path: &str) -> Result<(), String> {
     let mut data = load(app)?;

@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/nicegui-org/nicegui/main/nicegui/json_schemas/tauri-capabilities-v2.json",
   "identifier": "default",
   "description": "Commit Cat default capabilities",
-  "windows": ["cat-overlay"],
+  "windows": ["cat-overlay", "settings"],
   "permissions": [
     "core:default",
     "core:window:default",
@@ -17,6 +17,7 @@
     "core:window:allow-start-dragging",
     "shell:default",
     "fs:default",
-    "notification:default"
+    "notification:default",
+    "dialog:default"
   ]
 }

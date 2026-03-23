@@ -7,15 +7,29 @@
 }
 
 html, body {
-  background: transparent;
   overflow: visible;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   user-select: none;
   -webkit-user-select: none;
 }
 
+/* 고양이 오버레이 윈도우 (기본) */
+html, body, #root {
+  background: transparent;
+}
+
 #root {
   width: 200px;
   height: 150px;
-  background: transparent;
+}
+
+/* Settings 윈도우 */
+body.settings-window,
+body.settings-window #root {
+  background: #ffffff;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  user-select: auto;
+  -webkit-user-select: auto;
 }
