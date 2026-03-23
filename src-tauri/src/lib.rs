@@ -5,6 +5,7 @@ mod services;
 mod utils;
 
 use tauri::Manager;
+use tauri::menu::MenuBuilder;
 
 #[cfg(target_os = "macos")]
 use cocoa::appkit::{NSColor, NSWindow};
@@ -48,8 +49,20 @@ pub fn run() {
                 setup_macos_window(&window);
             }
 
-            // ── config 기반 트레이 아이콘에 클릭 핸들러 연결 ──
+            // ── config 기반 트레이 아이콘 설정 ──
             if let Some(tray) = app.tray_by_id("main-tray") {
+                // 우클릭 메뉴: 고양이 색상 선택
+                let menu = MenuBuilder::new(app)
+                    .text("cat-brown", "Brown")
+                    .text("cat-orange", "Orange")
+                    .text("cat-white", "White")
+                    .separator()
+                    .text("quit", "Quit")
+                    .build()?;
+                tray.set_menu(Some(menu))?;
+                tray.set_show_menu_on_left_click(false)?;
+
+                // 좌클릭: 고양이 보이기/숨기기
                 tray.on_tray_icon_event(|tray, event| {
                     if let tauri::tray::TrayIconEvent::Click {
                         button_state: tauri::tray::MouseButtonState::Up,
@@ -63,6 +76,18 @@ pub fn run() {
                                 let _ = window.show();
                             }
                         }
+                    }
+                });
+
+                // 메뉴 이벤트: 색상 변경 + 종료
+                tray.on_menu_event(|app, event| {
+                    use tauri::Emitter;
+                    match event.id().as_ref() {
+                        "cat-orange" => { let _ = app.emit("change-cat-color", "orange"); }
+                        "cat-brown" => { let _ = app.emit("change-cat-color", "brown"); }
+                        "cat-white" => { let _ = app.emit("change-cat-color", "white"); }
+                        "quit" => { app.exit(0); }
+                        _ => {}
                     }
                 });
             }

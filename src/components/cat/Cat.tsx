@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalPosition } from "@tauri-apps/api/dpi";
+import { listen } from "@tauri-apps/api/event";
 import { useCatStore } from "../../stores/catStore";
 import "./Cat.css";
 
@@ -14,8 +15,16 @@ const annoyedMessages = ["...meow.", "okay okay!", "I'm busy!", "stahp!"];
 type Behavior = "walk" | "stand" | "sit" | "sleep";
 
 export function Cat() {
-  const { catColor } = useCatStore();
+  const { catColor, setCatColor } = useCatStore();
   const appWindow = useRef(getCurrentWindow());
+
+  // 트레이 메뉴에서 고양이 색상 변경 이벤트 수신
+  useEffect(() => {
+    const unlisten = listen<string>("change-cat-color", (event) => {
+      setCatColor(event.payload as "white" | "brown" | "orange");
+    });
+    return () => { unlisten.then(fn => fn()); };
+  }, [setCatColor]);
 
   const winPosRef = useRef({ x: 300, y: 200 });
   const [direction, setDirection] = useState<"left" | "right">("right");
@@ -105,10 +114,13 @@ export function Cat() {
     return () => clearInterval(id);
   }, [behavior]);
 
+  // sit/sit2 이미지가 있는 색상
+  const hasSit = catColor === "brown" || catColor === "orange";
+
   // 이미지 경로 결정
   const getImageSrc = () => {
-    if (behavior === "sleep") return `/assets/cat/${catColor}_sit2.png`;
-    if (behavior === "sit") return `/assets/cat/${catColor}_sit.png`;
+    if (behavior === "sleep") return hasSit ? `/assets/cat/${catColor}_sit2.png` : `/assets/cat/${catColor}_stand.png`;
+    if (behavior === "sit") return hasSit ? `/assets/cat/${catColor}_sit.png` : `/assets/cat/${catColor}_stand.png`;
     if (behavior === "stand") return `/assets/cat/${catColor}_stand.png`;
     return frame === 0
       ? `/assets/cat/${catColor}_stand.png`
@@ -258,7 +270,7 @@ export function Cat() {
             draggable={false}
           />
         </div>
-        {behavior === "sleep" && <div className="cat__zzz">z z z</div>}
+        {behavior === "sleep" && hasSit && <div className="cat__zzz" style={direction === "right" ? { left: "auto", right: "5px" } : undefined}>z z z</div>}
       </div>
     </div>
   );
