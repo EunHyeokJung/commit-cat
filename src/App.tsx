@@ -54,6 +54,30 @@ function App() {
   // 야간 코딩 XP (세션당 1회)
   const lateNightXpGiven = useRef(false);
 
+  const startCodingTimer = () => {
+    if (!codingTimer.current) {
+      codingTimer.current = setInterval(() => {
+        addCodingMinute();
+        invoke("add_coding_minute").catch(() => {});
+
+        xpCodingMinutes.current += 1;
+        if (xpCodingMinutes.current >= 60) {
+          xpCodingMinutes.current = 0;
+          invoke<XpResult>("add_xp", { amount: 5, source: "coding_hour" }).then((res) => {
+            setLevel(res.level, res.currentExp, res.expToNext);
+          }).catch(() => {});
+        }
+      }, 60_000);
+    }
+  };
+
+  const stopCodingTimer = () => {
+    if (codingTimer.current) {
+      clearInterval(codingTimer.current);
+      codingTimer.current = null;
+    }
+  };
+
   // 앱 초기화: XP 상태 동기화
   useEffect(() => {
     (async () => {
@@ -73,22 +97,19 @@ function App() {
         const ideName = event.payload;
         setActiveIde(ideName);
         setState("coding");
+        startCodingTimer();
+      }),
 
-        // 코딩 시간 카운트 시작
-        if (!codingTimer.current) {
-          codingTimer.current = setInterval(() => {
-            addCodingMinute();
-            invoke("add_coding_minute").catch(() => {});
-
-            // XP: 60분마다 +5
-            xpCodingMinutes.current += 1;
-            if (xpCodingMinutes.current >= 60) {
-              xpCodingMinutes.current = 0;
-              invoke<XpResult>("add_xp", { amount: 5, source: "coding_hour" }).then((res) => {
-                setLevel(res.level, res.currentExp, res.expToNext);
-              }).catch(() => {});
-            }
-          }, 60_000);
+      // ── 주기적 상태 (10초마다) — 앱 시작 시 이미 IDE 켜져있는 경우 보완 ──
+      listen<ActivityStatus>("activity:status", (event) => {
+        const { isIdeRunning, activeIde } = event.payload;
+        if (isIdeRunning) {
+          setActiveIde(activeIde);
+          const current = useCatStore.getState().state;
+          if (current === "idle" || current === "sleeping") {
+            setState("coding");
+          }
+          startCodingTimer();
         }
       }),
 
@@ -96,12 +117,7 @@ function App() {
       listen("activity:ide-closed", () => {
         setActiveIde(null);
         setState("idle");
-
-        // 코딩 시간 카운트 중지
-        if (codingTimer.current) {
-          clearInterval(codingTimer.current);
-          codingTimer.current = null;
-        }
+        stopCodingTimer();
       }),
 
       // ── 유휴 → idle ──
@@ -112,11 +128,7 @@ function App() {
       // ── 장시간 유휴 → sleeping ──
       listen<number>("activity:sleeping", () => {
         setState("sleeping");
-
-        if (codingTimer.current) {
-          clearInterval(codingTimer.current);
-          codingTimer.current = null;
-        }
+        stopCodingTimer();
       }),
 
       // ── 밤 코딩 → tired + XP ──
