@@ -15,8 +15,6 @@ jobs:
         include:
           - platform: macos-latest
             args: '--target aarch64-apple-darwin'
-          - platform: macos-13
-            args: '--target x86_64-apple-darwin'
           - platform: windows-latest
             args: ''
 
@@ -33,10 +31,10 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ contains(matrix.platform, 'macos') && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
 
       - name: Install dependencies (macOS)
-        if: contains(matrix.platform, 'macos')
+        if: matrix.platform == 'macos-latest'
         run: |
           brew install libgit2
 
@@ -54,8 +52,7 @@ jobs:
             ## CommitCat ${{ github.ref_name }}
 
             ### Download
-            - **macOS (Apple Silicon)**: `CommitCat_aarch64.dmg`
-            - **macOS (Intel)**: `CommitCat_x86_64.dmg`
+            - **macOS (Apple Silicon)**: `CommitCat.dmg`
             - **Windows**: `CommitCat-Setup.exe`
 
             ### What's new
