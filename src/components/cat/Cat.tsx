@@ -93,24 +93,6 @@ export function Cat() {
     }
   }, [levelUp, clearLevelUp]);
 
-  // ── Streak 마일스톤 이벤트 수신 ──
-  useEffect(() => {
-    const unlisten = listen<{ days: number; bonus: number }>("streak:milestone", (event) => {
-      showBubble(`${event.payload.days} day streak!`, 4000);
-      setCatState("celebrating");
-    });
-    return () => { unlisten.then(fn => fn()); };
-  }, [showBubble, setCatState]);
-
-  // ── 업데이트 알림 수신 ──
-  useEffect(() => {
-    const unlisten = listen<{ latestVersion: string }>("update:available", (event) => {
-      showBubble(`new version v${event.payload.latestVersion}!`, 5000);
-      notify("CommitCat", `New version v${event.payload.latestVersion} available!`);
-    });
-    return () => { unlisten.then(fn => fn()); };
-  }, [showBubble]);
-
   // ── 포모도로 tick ──
   useEffect(() => {
     if (!pomodoroActive || pomodoroPaused) return;
@@ -395,6 +377,24 @@ export function Cat() {
     ]);
     return () => { unlisten.then(fns => fns.forEach(fn => fn())); };
   }, [showBubble, setCatState]);
+
+  // ── Streak 마일스톤 이벤트 수신 ──
+  useEffect(() => {
+    const unlisten = listen<{ days: number; bonus: number }>("streak:milestone", (event) => {
+      showBubble(`${event.payload.days} day streak!`, 4000);
+      setCatState("celebrating");
+    });
+    return () => { unlisten.then(fn => fn()); };
+  }, [showBubble, setCatState]);
+
+  // ── 업데이트 알림 수신 ──
+  useEffect(() => {
+    const unlisten = listen<{ latestVersion: string }>("update:available", (event) => {
+      showBubble(`new version v${event.payload.latestVersion}!`, 5000);
+      notify("CommitCat", `New version v${event.payload.latestVersion} available!`);
+    });
+    return () => { unlisten.then(fn => fn()); };
+  }, [showBubble]);
 
   // ── 포모도로 완료 감지 ──
   useEffect(() => {
