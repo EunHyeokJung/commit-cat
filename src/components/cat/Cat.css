@@ -46,7 +46,6 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  transition: transform 0.3s ease;
 }
 
 .cat__image {
@@ -59,13 +58,13 @@
   -webkit-user-drag: none;
 }
 
-.cat__image--walk {
-  height: calc(72px * 1.18);
+/* 색상별 크기 — 모든 상태에서 동일 높이 (전환 시 축소 방지) */
+.cat__image--white {
+  height: 72px;
 }
 
-/* 색상별 크기 보정 */
 .cat__image--white.cat__image--walk {
-  height: 72px;
+  height: calc(72px * 1.1);
 }
 
 .cat__image--orange {
@@ -74,15 +73,6 @@
 
 .cat__image--orange.cat__image--walk {
   height: calc(72px * 1.1 * 0.92);
-  margin-bottom: 2px;
-}
-
-.cat__image--orange.cat__image--sit {
-  height: calc(72px * 1.1 * 0.94 * 0.96);
-}
-
-.cat__image--orange.cat__image--sleep {
-  height: calc(72px * 1.1 * 0.94 * 0.96);
 }
 
 .cat__image--brown {
@@ -90,19 +80,9 @@
   margin-bottom: 2px;
 }
 
-.cat__image--brown.cat__image--walk {
-  height: calc(72px * 1.12 * 0.96);
-  margin-bottom: 2px;
-}
-
-.cat__image--brown.cat__image--sit {
-  height: calc(72px * 1.12 * 0.9);
-  margin-bottom: 2px;
-}
-
+.cat__image--brown.cat__image--sit,
 .cat__image--brown.cat__image--sleep {
-  height: calc(72px * 1.12 * 0.96);
-  margin-bottom: -2px;
+  height: calc(72px * 1.12 * 0.94 * 0.94);
 }
 
 /* ══════════════════════════════════════
@@ -267,6 +247,9 @@
   padding: 5px 12px;
   border-radius: 14px;
   white-space: nowrap;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
   animation: bubble-pop 0.25s ease-out, bubble-fade 0.4s ease-in 1.6s forwards;
   pointer-events: none;
@@ -291,6 +274,20 @@
 @keyframes bubble-fade {
   0% { opacity: 1; }
   100% { opacity: 0; }
+}
+
+/* ══════════════════════════════════════
+   AI 채팅 말풍선
+   ══════════════════════════════════════ */
+
+.cat__bubble--ai {
+  white-space: pre-wrap;
+  max-width: 300px;
+  text-overflow: unset;
+  line-height: 1.4;
+  padding: 8px 14px;
+  font-size: 12px;
+  animation: bubble-pop 0.25s ease-out;
 }
 
 /* ══════════════════════════════════════

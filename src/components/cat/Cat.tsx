@@ -6,6 +6,7 @@ import { LogicalPosition, LogicalSize } from "@tauri-apps/api/dpi";
 import { listen } from "@tauri-apps/api/event";
 import { sendNotification, isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import { useCatStore } from "../../stores/catStore";
+import { useShallow } from "zustand/react/shallow";
 import "./Cat.css";
 
 async function notify(title: string, body: string) {
@@ -27,6 +28,12 @@ const WIN_W_EXPANDED = 320;
 const normalMessages = ["meow!", "nya~", "purr...", "mrrp?", "*stretch*", "code with me~", "prrrr~"];
 const happyMessages = ["love it!", "more pets!", "purrrr~", "nya nya~!"];
 const annoyedMessages = ["...meow.", "okay okay!", "I'm busy!", "stahp!"];
+const codingMessages = [
+  "nice code~", "watching you code!", "you're doing great!",
+  "hmm interesting...", "*peeks at screen*", "keep going!",
+  "meow~ what's this?", "so focused!", "need a break?",
+  "cool logic!", "don't forget to save~", "purrr~ good work",
+];
 
 type Behavior = "walk" | "stand" | "sit" | "sleep";
 
@@ -37,14 +44,129 @@ interface XpResult {
   leveledUp: boolean;
 }
 
+// ══════════════════════════════════════
+// 타이머 (별도 컴포넌트 — 매초 리렌더가 고양이에 영향 안 줌)
+// ══════════════════════════════════════
+function TimerDisplay({ showBubble }: { showBubble: (msg: string, duration?: number) => void }) {
+  const pomodoroActive = useCatStore(s => s.pomodoroActive);
+  const pomodoroPaused = useCatStore(s => s.pomodoroPaused);
+  const pomodoroSeconds = useCatStore(s => s.pomodoroSeconds);
+  const tickPomodoro = useCatStore(s => s.tickPomodoro);
+  const stopPomodoro = useCatStore(s => s.stopPomodoro);
+  const pausePomodoro = useCatStore(s => s.pausePomodoro);
+  const resumePomodoro = useCatStore(s => s.resumePomodoro);
+  const addPomodoro = useCatStore(s => s.addPomodoro);
+  const breakActive = useCatStore(s => s.breakActive);
+  const breakSeconds = useCatStore(s => s.breakSeconds);
+  const tickBreak = useCatStore(s => s.tickBreak);
+  const startBreak = useCatStore(s => s.startBreak);
+  const stopBreak = useCatStore(s => s.stopBreak);
+  const setCatState = useCatStore(s => s.setState);
+  const setLevel = useCatStore(s => s.setLevel);
+  const triggerLevelUp = useCatStore(s => s.triggerLevelUp);
+
+  // 포모도로 tick
+  useEffect(() => {
+    if (!pomodoroActive || pomodoroPaused) return;
+    const id = setInterval(() => tickPomodoro(), 1000);
+    return () => clearInterval(id);
+  }, [pomodoroActive, pomodoroPaused, tickPomodoro]);
+
+  // 브레이크 tick
+  useEffect(() => {
+    if (!breakActive) return;
+    const id = setInterval(() => tickBreak(), 1000);
+    return () => clearInterval(id);
+  }, [breakActive, tickBreak]);
+
+  // 포모도로 완료
+  useEffect(() => {
+    if (!pomodoroActive || pomodoroSeconds > 0) return;
+    stopPomodoro();
+    addPomodoro();
+    setCatState("celebrating");
+    showBubble("focus done! good job!", 3000);
+    notify("CommitCat", "focus session complete! +20 XP");
+    invoke<XpResult>("add_xp", { amount: 20, source: "pomodoro" }).then((res) => {
+      setLevel(res.level, res.currentExp, res.expToNext);
+      if (res.leveledUp) triggerLevelUp(res.level);
+    }).catch(() => {});
+    invoke<{ breakMinutes?: number }>("get_settings").then((s) => {
+      const mins = s.breakMinutes ?? 5;
+      startBreak(mins * 60);
+    }).catch(() => startBreak(5 * 60));
+  }, [pomodoroActive, pomodoroSeconds, stopPomodoro, addPomodoro, setCatState, showBubble, setLevel, triggerLevelUp, startBreak]);
+
+  // 브레이크 완료
+  useEffect(() => {
+    if (!breakActive || breakSeconds > 0) return;
+    stopBreak();
+    showBubble("break's over! back to work~", 3000);
+    notify("CommitCat", "break's over! back to work~");
+  }, [breakActive, breakSeconds, stopBreak, showBubble]);
+
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  if (pomodoroActive) {
+    return (
+      <div className="cat-timer">
+        <span className="cat-timer__time">{formatTime(pomodoroSeconds)}</span>
+        <button
+          className="cat-timer__btn"
+          onClick={() => pomodoroPaused ? resumePomodoro() : pausePomodoro()}
+          title={pomodoroPaused ? "Resume" : "Pause"}
+        >
+          {pomodoroPaused ? "\u25B6" : "\u23F8"}
+        </button>
+        <button
+          className="cat-timer__btn cat-timer__btn--stop"
+          onClick={() => { stopPomodoro(); setCatState("idle"); }}
+          title="Stop"
+        >
+          {"\u25A0"}
+        </button>
+      </div>
+    );
+  }
+
+  if (breakActive) {
+    return (
+      <div className="cat-timer cat-timer--break">
+        <span className="cat-timer__label">BREAK</span>
+        <span className="cat-timer__time">{formatTime(breakSeconds)}</span>
+        <button
+          className="cat-timer__btn cat-timer__btn--stop"
+          onClick={() => stopBreak()}
+          title="Skip"
+        >
+          {"\u25A0"}
+        </button>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+// ══════════════════════════════════════
+// 메인 고양이 컴포넌트
+// ══════════════════════════════════════
 export function Cat() {
-  const { catColor, setCatColor, state: catState, levelUp, clearLevelUp } = useCatStore();
   const {
-    pomodoroActive, pomodoroPaused, pomodoroSeconds,
-    startPomodoro, pausePomodoro, resumePomodoro, stopPomodoro, tickPomodoro,
-    breakActive, breakSeconds, startBreak, stopBreak, tickBreak,
-    addPomodoro, setState: setCatState, setLevel, triggerLevelUp,
-  } = useCatStore();
+    catColor, setCatColor, state: catState, levelUp, clearLevelUp,
+    pomodoroActive, startPomodoro, stopPomodoro,
+    setState: setCatState,
+  } = useCatStore(useShallow(s => ({
+    catColor: s.catColor, setCatColor: s.setCatColor,
+    state: s.state, levelUp: s.levelUp, clearLevelUp: s.clearLevelUp,
+    pomodoroActive: s.pomodoroActive,
+    startPomodoro: s.startPomodoro, stopPomodoro: s.stopPomodoro,
+    setState: s.setState,
+  })));
   const appWindow = useRef(getCurrentWindow());
 
   // 트레이 메뉴에서 고양이 색상 변경 이벤트 수신
@@ -92,20 +214,6 @@ export function Cat() {
       return () => clearTimeout(timer);
     }
   }, [levelUp, clearLevelUp]);
-
-  // ── 포모도로 tick ──
-  useEffect(() => {
-    if (!pomodoroActive || pomodoroPaused) return;
-    const id = setInterval(() => tickPomodoro(), 1000);
-    return () => clearInterval(id);
-  }, [pomodoroActive, pomodoroPaused, tickPomodoro]);
-
-  // ── 브레이크 tick ──
-  useEffect(() => {
-    if (!breakActive) return;
-    const id = setInterval(() => tickBreak(), 1000);
-    return () => clearInterval(id);
-  }, [breakActive, tickBreak]);
 
   // 포모도로 시작 시 → coding 상태
   useEffect(() => {
@@ -215,7 +323,7 @@ export function Cat() {
 
   // catState 변경 → 행동 오버라이드
   useEffect(() => {
-    if (catState === "coding" || catState === "tired") setBehavior("sit");
+    if (catState === "tired") setBehavior("sit");
     else if (catState === "sleeping") setBehavior("sleep");
     else if (catState === "celebrating") {
       setBehavior("stand");
@@ -226,12 +334,12 @@ export function Cat() {
       }, 3000);
       return () => clearTimeout(id);
     } else if (catState === "frustrated") setBehavior("stand");
-    // "idle" / "interaction" → 기존 자체 사이클 유지
+    // "idle" / "interaction" / "coding" → 기존 자체 사이클 유지
   }, [catState]);
 
-  // 행동 전환: walk <-> stand <-> sit <-> sleep (idle일 때만)
+  // 행동 전환: walk <-> stand <-> sit <-> sleep
   useEffect(() => {
-    if (catState !== "idle" && catState !== "interaction") return;
+    if (catState !== "idle" && catState !== "interaction" && catState !== "coding") return;
 
     let duration: number;
     let next: Behavior;
@@ -260,8 +368,8 @@ export function Cat() {
         next = "stand";
       }
     } else {
-      // sleep -> 30초 후 stand
-      duration = 30000 + Math.random() * 10000;
+      // sleep -> 10~15초 후 stand
+      duration = 10000 + Math.random() * 5000;
       next = "stand";
     }
 
@@ -310,8 +418,6 @@ export function Cat() {
   };
   const imageSrc = getImageSrc();
 
-
-
   // ══════════════════════════════════════
   // 윈도우 이동
   // ══════════════════════════════════════
@@ -329,9 +435,12 @@ export function Cat() {
     (async () => {
       try {
         const pos = await appWindow.current.outerPosition();
-        const clampedY = Math.min(pos.y, maxY.current);
-        winPosRef.current = { x: pos.x, y: clampedY };
-        if (pos.y > maxY.current) moveWindow(pos.x, clampedY);
+        const scale = await appWindow.current.scaleFactor();
+        const logicalX = pos.x / scale;
+        const logicalY = pos.y / scale;
+        const clampedY = Math.min(logicalY, maxY.current);
+        winPosRef.current = { x: logicalX, y: clampedY };
+        if (logicalY > maxY.current) moveWindow(logicalX, clampedY);
       } catch (_) {}
     })();
   }, [moveWindow]);
@@ -354,11 +463,24 @@ export function Cat() {
   // ══════════════════════════════════════
   // 말풍선
   // ══════════════════════════════════════
+  const [isAiBubble, setIsAiBubble] = useState(false);
+
+  const dismissBubble = useCallback(() => {
+    setBubble(null);
+    if (isAiBubble) {
+      setIsAiBubble(false);
+      appWindow.current.setSize(new LogicalSize(WIN_W, 150)).catch(() => {});
+    }
+  }, [isAiBubble]);
+
   const showBubble = useCallback((msg: string, duration = 2000) => {
     setBubble(msg);
     setBubbleKey(k => k + 1);
+    setIsAiBubble(false);
     if (bubbleTimer.current) clearTimeout(bubbleTimer.current);
-    bubbleTimer.current = setTimeout(() => setBubble(null), duration);
+    bubbleTimer.current = setTimeout(() => {
+      setBubble(null);
+    }, duration);
   }, []);
 
   // ── GitHub 이벤트 ──
@@ -396,32 +518,35 @@ export function Cat() {
     return () => { unlisten.then(fn => fn()); };
   }, [showBubble]);
 
-  // ── 포모도로 완료 감지 ──
-  useEffect(() => {
-    if (!pomodoroActive || pomodoroSeconds > 0) return;
-    stopPomodoro();
-    addPomodoro();
-    setCatState("celebrating");
-    showBubble("focus complete! good job hooman!", 3000);
-    notify("CommitCat", "focus session complete! +20 XP");
-    invoke<XpResult>("add_xp", { amount: 20, source: "pomodoro" }).then((res) => {
-      setLevel(res.level, res.currentExp, res.expToNext);
-      if (res.leveledUp) triggerLevelUp(res.level);
-    }).catch(() => {});
-    // 자동 브레이크 시작
-    invoke<{ breakMinutes?: number }>("get_settings").then((s) => {
-      const mins = s.breakMinutes ?? 5;
-      startBreak(mins * 60);
-    }).catch(() => startBreak(5 * 60));
-  }, [pomodoroActive, pomodoroSeconds, stopPomodoro, addPomodoro, setCatState, showBubble, setLevel, triggerLevelUp, startBreak]);
+  // ── 코딩 중 랜덤 말풍선 (3~10분 간격) ──
+  const codingBubbleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── 브레이크 완료 감지 ──
   useEffect(() => {
-    if (!breakActive || breakSeconds > 0) return;
-    stopBreak();
-    showBubble("break's over! back to work~", 3000);
-    notify("CommitCat", "break's over! back to work~");
-  }, [breakActive, breakSeconds, stopBreak, showBubble]);
+    if (catState !== "coding") {
+      if (codingBubbleTimer.current) {
+        clearTimeout(codingBubbleTimer.current);
+        codingBubbleTimer.current = null;
+      }
+      return;
+    }
+
+    const scheduleBubble = () => {
+      const delay = (3 + Math.random() * 7) * 60_000; // 3~10분
+      codingBubbleTimer.current = setTimeout(() => {
+        const msg = codingMessages[Math.floor(Math.random() * codingMessages.length)];
+        showBubble(msg, 3000);
+        scheduleBubble();
+      }, delay);
+    };
+
+    scheduleBubble();
+    return () => {
+      if (codingBubbleTimer.current) {
+        clearTimeout(codingBubbleTimer.current);
+        codingBubbleTimer.current = null;
+      }
+    };
+  }, [catState, showBubble]);
 
   // ══════════════════════════════════════
   // 드래그
@@ -526,7 +651,12 @@ export function Cat() {
     showBubble("thinking...", 30000);
     try {
       const response = await invoke<string>("chat_with_cat", { message: msg });
-      showBubble(response, 5000);
+      // AI 응답: 윈도우 넓히고, 클릭할 때까지 유지
+      await appWindow.current.setSize(new LogicalSize(WIN_W_EXPANDED, 220));
+      if (bubbleTimer.current) clearTimeout(bubbleTimer.current);
+      setBubble(response);
+      setBubbleKey(k => k + 1);
+      setIsAiBubble(true);
     } catch (e) {
       console.error("chat_with_cat error:", e);
       showBubble("mrrp... can't think right now~", 3000);
@@ -561,12 +691,6 @@ export function Cat() {
   // ══════════════════════════════════════
   const isFlipped = direction === "right";
 
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${sec.toString().padStart(2, "0")}`;
-  };
-
   return (
     <div className="cat-window">
       <div className="bubble-area">
@@ -575,38 +699,15 @@ export function Cat() {
             LEVEL UP! Lv.{levelUpLevel}
           </div>
         ) : bubble ? (
-          <div className="cat__bubble" key={bubbleKey}>{bubble}</div>
-        ) : pomodoroActive ? (
-          <div className="cat-timer">
-            <span className="cat-timer__time">{formatTime(pomodoroSeconds)}</span>
-            <button
-              className="cat-timer__btn"
-              onClick={() => pomodoroPaused ? resumePomodoro() : pausePomodoro()}
-              title={pomodoroPaused ? "Resume" : "Pause"}
-            >
-              {pomodoroPaused ? "\u25B6" : "\u23F8"}
-            </button>
-            <button
-              className="cat-timer__btn cat-timer__btn--stop"
-              onClick={() => { stopPomodoro(); setCatState("idle"); }}
-              title="Stop"
-            >
-              {"\u25A0"}
-            </button>
-          </div>
-        ) : breakActive ? (
-          <div className="cat-timer cat-timer--break">
-            <span className="cat-timer__label">BREAK</span>
-            <span className="cat-timer__time">{formatTime(breakSeconds)}</span>
-            <button
-              className="cat-timer__btn cat-timer__btn--stop"
-              onClick={() => stopBreak()}
-              title="Skip"
-            >
-              {"\u25A0"}
-            </button>
-          </div>
-        ) : null}
+          <div
+            className={`cat__bubble${isAiBubble ? " cat__bubble--ai" : ""}`}
+            key={bubbleKey}
+            onClick={isAiBubble ? dismissBubble : undefined}
+            style={isAiBubble ? { pointerEvents: "auto", cursor: "pointer" } : undefined}
+          >{bubble}</div>
+        ) : (
+          <TimerDisplay showBubble={showBubble} />
+        )}
       </div>
       <div
         className={`cat ${isDragging ? "cat--dragging" : ""} ${catState !== "idle" ? `cat--${catState}` : ""}`}
