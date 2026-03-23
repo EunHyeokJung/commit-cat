@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: '--target aarch64-apple-darwin'
+          - platform: macos-latest
+            args: '--target x86_64-apple-darwin'
+          - platform: windows-latest
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Install dependencies (macOS)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          brew install libgit2
+
+      - name: Install frontend dependencies
+        run: npm install
+
+      - name: Build and release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'CommitCat ${{ github.ref_name }}'
+          releaseBody: |
+            ## CommitCat ${{ github.ref_name }}
+
+            ### Download
+            - **macOS (Apple Silicon)**: `CommitCat_aarch64.dmg`
+            - **macOS (Intel)**: `CommitCat_x86_64.dmg`
+            - **Windows**: `CommitCat-Setup.exe`
+
+            ### What's new
+            See [CHANGELOG](https://github.com/eunseo9311/commit-cat/commits/main) for details.
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
