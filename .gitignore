@@ -141,7 +141,6 @@ vite.config.ts.timestamp-*
 # Tauri
 src-tauri/target/
 src-tauri/WixTools/
-src-tauri/icons/*.ico
 
 # IDE
 .idea/

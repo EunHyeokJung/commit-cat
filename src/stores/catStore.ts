@@ -34,6 +34,12 @@ interface CatStore {
   // Level up
   levelUp: number | null;
 
+  // Pomodoro
+  pomodoroActive: boolean;
+  pomodoroPaused: boolean;
+  pomodoroSeconds: number;
+  pomodoroTotal: number;
+
   // Actions
   setState: (state: string) => void;
   setLevel: (level: number, exp: number, expToNext: number) => void;
@@ -45,6 +51,11 @@ interface CatStore {
   addPomodoro: () => void;
   triggerLevelUp: (level: number) => void;
   clearLevelUp: () => void;
+  startPomodoro: (totalSeconds: number) => void;
+  pausePomodoro: () => void;
+  resumePomodoro: () => void;
+  stopPomodoro: () => void;
+  tickPomodoro: () => void;
 }
 
 const moodFromState = (state: CatState): CatMood => {
@@ -79,6 +90,11 @@ export const useCatStore = create<CatStore>((set) => ({
   todayCommits: 0,
   todayPomodoros: 0,
 
+  pomodoroActive: false,
+  pomodoroPaused: false,
+  pomodoroSeconds: 0,
+  pomodoroTotal: 0,
+
   // Actions
   setState: (state) =>
     set({
@@ -112,4 +128,22 @@ export const useCatStore = create<CatStore>((set) => ({
 
   clearLevelUp: () =>
     set({ levelUp: null }),
+
+  startPomodoro: (totalSeconds) =>
+    set({ pomodoroActive: true, pomodoroPaused: false, pomodoroSeconds: totalSeconds, pomodoroTotal: totalSeconds }),
+
+  pausePomodoro: () =>
+    set({ pomodoroPaused: true }),
+
+  resumePomodoro: () =>
+    set({ pomodoroPaused: false }),
+
+  stopPomodoro: () =>
+    set({ pomodoroActive: false, pomodoroPaused: false, pomodoroSeconds: 0, pomodoroTotal: 0 }),
+
+  tickPomodoro: () =>
+    set((s) => {
+      if (!s.pomodoroActive || s.pomodoroPaused || s.pomodoroSeconds <= 0) return {};
+      return { pomodoroSeconds: s.pomodoroSeconds - 1 };
+    }),
 }));

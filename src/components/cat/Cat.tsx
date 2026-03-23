@@ -15,8 +15,20 @@ const annoyedMessages = ["...meow.", "okay okay!", "I'm busy!", "stahp!"];
 
 type Behavior = "walk" | "stand" | "sit" | "sleep";
 
+interface XpResult {
+  level: number;
+  currentExp: number;
+  expToNext: number;
+  leveledUp: boolean;
+}
+
 export function Cat() {
   const { catColor, setCatColor, state: catState, levelUp, clearLevelUp } = useCatStore();
+  const {
+    pomodoroActive, pomodoroPaused, pomodoroSeconds,
+    startPomodoro, pausePomodoro, resumePomodoro, stopPomodoro, tickPomodoro,
+    addPomodoro, setState: setCatState, setLevel, triggerLevelUp,
+  } = useCatStore();
   const appWindow = useRef(getCurrentWindow());
 
   // 트레이 메뉴에서 고양이 색상 변경 이벤트 수신
@@ -57,6 +69,20 @@ export function Cat() {
       return () => clearTimeout(timer);
     }
   }, [levelUp, clearLevelUp]);
+
+  // ── 포모도로 tick ──
+  useEffect(() => {
+    if (!pomodoroActive || pomodoroPaused) return;
+    const id = setInterval(() => tickPomodoro(), 1000);
+    return () => clearInterval(id);
+  }, [pomodoroActive, pomodoroPaused, tickPomodoro]);
+
+  // 포모도로 시작 시 → coding 상태
+  useEffect(() => {
+    if (pomodoroActive) {
+      setCatState("coding");
+    }
+  }, [pomodoroActive, setCatState]);
 
   // ── 컨텍스트 메뉴 ──
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -108,6 +134,23 @@ export function Cat() {
       resizable: false,
     });
   }, []);
+
+  const handleStartFocus = useCallback(async () => {
+    setContextMenu(null);
+    try {
+      const settings = await invoke<{ pomodoroMinutes?: number }>("get_settings");
+      const minutes = settings.pomodoroMinutes ?? 25;
+      startPomodoro(minutes * 60);
+    } catch (_) {
+      startPomodoro(25 * 60);
+    }
+  }, [startPomodoro]);
+
+  const handleStopFocus = useCallback(() => {
+    setContextMenu(null);
+    stopPomodoro();
+    setCatState("idle");
+  }, [stopPomodoro, setCatState]);
 
   const handleQuit = useCallback(async () => {
     setContextMenu(null);
@@ -270,6 +313,19 @@ export function Cat() {
     bubbleTimer.current = setTimeout(() => setBubble(null), duration);
   }, []);
 
+  // ── 포모도로 완료 감지 ──
+  useEffect(() => {
+    if (!pomodoroActive || pomodoroSeconds > 0) return;
+    stopPomodoro();
+    addPomodoro();
+    setCatState("celebrating");
+    showBubble("focus complete! good job hooman!", 3000);
+    invoke<XpResult>("add_xp", { amount: 20, source: "pomodoro" }).then((res) => {
+      setLevel(res.level, res.currentExp, res.expToNext);
+      if (res.leveledUp) triggerLevelUp(res.level);
+    }).catch(() => {});
+  }, [pomodoroActive, pomodoroSeconds, stopPomodoro, addPomodoro, setCatState, showBubble, setLevel, triggerLevelUp]);
+
   // ══════════════════════════════════════
   // 드래그
   // ══════════════════════════════════════
@@ -338,6 +394,12 @@ export function Cat() {
   // ══════════════════════════════════════
   const isFlipped = direction === "right";
 
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
   return (
     <div className="cat-window">
       <div className="bubble-area">
@@ -347,6 +409,24 @@ export function Cat() {
           </div>
         ) : bubble ? (
           <div className="cat__bubble" key={bubbleKey}>{bubble}</div>
+        ) : pomodoroActive ? (
+          <div className="cat-timer">
+            <span className="cat-timer__time">{formatTime(pomodoroSeconds)}</span>
+            <button
+              className="cat-timer__btn"
+              onClick={() => pomodoroPaused ? resumePomodoro() : pausePomodoro()}
+              title={pomodoroPaused ? "Resume" : "Pause"}
+            >
+              {pomodoroPaused ? "\u25B6" : "\u23F8"}
+            </button>
+            <button
+              className="cat-timer__btn cat-timer__btn--stop"
+              onClick={() => { stopPomodoro(); setCatState("idle"); }}
+              title="Stop"
+            >
+              {"\u25A0"}
+            </button>
+          </div>
         ) : null}
       </div>
       <div
@@ -382,6 +462,11 @@ export function Cat() {
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onMouseDown={(e) => e.stopPropagation()}
         >
+          {pomodoroActive ? (
+            <button className="cat-context-menu__item" onClick={handleStopFocus}>Stop Focus</button>
+          ) : (
+            <button className="cat-context-menu__item" onClick={handleStartFocus}>Start Focus</button>
+          )}
           <button className="cat-context-menu__item" onClick={openSummary}>Today</button>
           <button className="cat-context-menu__item" onClick={openSettings}>Settings</button>
           <div className="cat-context-menu__separator" />

@@ -368,6 +368,48 @@
 @keyframes pb-bottom-right { 0% { opacity:1; transform:translate(0,0) scale(1); } 70% { opacity:1; } 100% { opacity:0; transform:translate(28px, 28px) scale(0.3); } }
 
 /* ══════════════════════════════════════
+   포모도로 타이머
+   ══════════════════════════════════════ */
+
+.cat-timer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: auto;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 3px 8px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  animation: bubble-pop 0.25s ease-out;
+}
+
+.cat-timer__time {
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  color: #e8881c;
+  letter-spacing: 0.5px;
+}
+
+.cat-timer__btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  color: #888;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.cat-timer__btn:hover {
+  color: #333;
+}
+
+.cat-timer__btn--stop:hover {
+  color: #e53935;
+}
+
+/* ══════════════════════════════════════
    컨텍스트 메뉴
    ══════════════════════════════════════ */
 

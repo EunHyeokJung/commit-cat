@@ -15,6 +15,8 @@ type CatColor = "white" | "brown" | "orange";
 export function Settings() {
   const [repos, setRepos] = useState<string[]>([]);
   const [catColor, setCatColor] = useState<CatColor>("brown");
+  const [focusMinutes, setFocusMinutes] = useState(25);
+  const [breakMinutes, setBreakMinutes] = useState(5);
   const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [cloneModalOpen, setCloneModalOpen] = useState(false);
@@ -31,11 +33,13 @@ export function Settings() {
       try {
         const [repoList, settings, xpStatus] = await Promise.all([
           invoke<string[]>("get_watched_repos"),
-          invoke<{ catColor?: CatColor }>("get_settings"),
+          invoke<{ catColor?: CatColor; pomodoroMinutes?: number; breakMinutes?: number }>("get_settings"),
           invoke<XpStatus>("get_xp_status"),
         ]);
         setRepos(repoList);
         if (settings.catColor) setCatColor(settings.catColor);
+        if (settings.pomodoroMinutes) setFocusMinutes(settings.pomodoroMinutes);
+        if (settings.breakMinutes) setBreakMinutes(settings.breakMinutes);
         setXp(xpStatus);
       } catch (e) {
         console.error("Failed to load settings:", e);
@@ -131,6 +135,29 @@ export function Settings() {
       setRepos(prev => prev.filter(r => r !== path));
     } catch (e) {
       console.error("Failed to remove repo:", e);
+    }
+  }, []);
+
+  // Timer 설정 변경
+  const handleFocusChange = useCallback(async (val: number) => {
+    const clamped = Math.max(1, Math.min(120, val));
+    setFocusMinutes(clamped);
+    try {
+      const current = await invoke<Record<string, unknown>>("get_settings");
+      await invoke("update_settings", { settings: { ...current, pomodoroMinutes: clamped } });
+    } catch (e) {
+      console.error("Failed to update focus minutes:", e);
+    }
+  }, []);
+
+  const handleBreakChange = useCallback(async (val: number) => {
+    const clamped = Math.max(1, Math.min(60, val));
+    setBreakMinutes(clamped);
+    try {
+      const current = await invoke<Record<string, unknown>>("get_settings");
+      await invoke("update_settings", { settings: { ...current, breakMinutes: clamped } });
+    } catch (e) {
+      console.error("Failed to update break minutes:", e);
     }
   }, []);
 
@@ -233,6 +260,27 @@ export function Settings() {
                 title={color}
               />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Timer */}
+      <section className="settings__section">
+        <h2 className="settings__section-title">Timer</h2>
+        <div className="settings__timer-row">
+          <label className="settings__timer-label">Focus Duration</label>
+          <div className="settings__stepper">
+            <button className="settings__stepper-btn" onClick={() => handleFocusChange(focusMinutes - 5)}>-</button>
+            <span className="settings__stepper-value">{focusMinutes} min</span>
+            <button className="settings__stepper-btn" onClick={() => handleFocusChange(focusMinutes + 5)}>+</button>
+          </div>
+        </div>
+        <div className="settings__timer-row">
+          <label className="settings__timer-label">Break Duration</label>
+          <div className="settings__stepper">
+            <button className="settings__stepper-btn" onClick={() => handleBreakChange(breakMinutes - 1)}>-</button>
+            <span className="settings__stepper-value">{breakMinutes} min</span>
+            <button className="settings__stepper-btn" onClick={() => handleBreakChange(breakMinutes + 1)}>+</button>
           </div>
         </div>
       </section>

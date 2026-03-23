@@ -504,6 +504,7 @@ dependencies = [
  "cocoa",
  "directories",
  "git2",
+ "libgit2-sys",
  "notify",
  "objc",
  "serde",

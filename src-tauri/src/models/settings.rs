@@ -18,6 +18,9 @@ pub struct AppSettings {
     pub ai_enabled: bool,
     /// 뽀모도로 기본 시간 (분)
     pub pomodoro_minutes: u32,
+    /// 휴식 시간 (분)
+    #[serde(default = "default_break_minutes")]
+    pub break_minutes: u32,
     /// 유휴 판정 시간 (초)
     pub idle_threshold_seconds: u64,
     /// 밤 시간 시작 (시, 24h)
@@ -27,6 +30,8 @@ pub struct AppSettings {
     /// 등록된 Git 저장소 경로들
     pub git_repos: Vec<String>,
 }
+
+fn default_break_minutes() -> u32 { 5 }
 
 impl Default for AppSettings {
     fn default() -> Self {
@@ -38,6 +43,7 @@ impl Default for AppSettings {
             docker_integration: false, // v2
             ai_enabled: false,         // v3
             pomodoro_minutes: 25,
+            break_minutes: 5,
             idle_threshold_seconds: 300, // 5분
             night_hour_start: 23,
             night_hour_end: 6,
