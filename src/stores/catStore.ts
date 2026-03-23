@@ -10,6 +10,7 @@ type CatState =
   | "interaction";
 
 type CatMood = "happy" | "sad" | "sleeping" | "focused" | "excited";
+type CatColor = "white" | "brown" | "orange";
 
 interface CatStore {
   // State
@@ -19,6 +20,7 @@ interface CatStore {
   exp: number;
   expToNext: number;
   streakDays: number;
+  catColor: CatColor;
 
   // Activity
   activeIde: string | null;
@@ -32,6 +34,7 @@ interface CatStore {
   // Actions
   setState: (state: string) => void;
   setLevel: (level: number, exp: number, expToNext: number) => void;
+  setCatColor: (color: CatColor) => void;
   setActiveIde: (ide: string | null) => void;
   setIdleSeconds: (seconds: number) => void;
   addCommit: () => void;
@@ -60,6 +63,7 @@ export const useCatStore = create<CatStore>((set) => ({
   exp: 0,
   expToNext: 60,
   streakDays: 0,
+  catColor: "orange",
 
   activeIde: null,
   idleSeconds: 0,
@@ -77,6 +81,9 @@ export const useCatStore = create<CatStore>((set) => ({
 
   setLevel: (level, exp, expToNext) =>
     set({ level, exp, expToNext }),
+
+  setCatColor: (color) =>
+    set({ catColor: color }),
 
   setActiveIde: (ide) =>
     set({ activeIde: ide }),

@@ -16,10 +16,10 @@
       {
         "label": "cat-overlay",
         "title": "Commit Cat",
-        "width": 120,
-        "height": 100,
+        "width": 200,
+        "height": 150,
         "x": 300,
-        "y": 400,
+        "y": 200,
         "resizable": false,
         "decorations": false,
         "transparent": true,
