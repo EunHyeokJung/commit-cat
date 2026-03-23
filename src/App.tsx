@@ -63,6 +63,7 @@ function App() {
         if (!codingTimer.current) {
           codingTimer.current = setInterval(() => {
             addCodingMinute();
+            invoke("add_coding_minute").catch(() => {});
 
             // XP: 60분마다 +5
             xpCodingMinutes.current += 1;

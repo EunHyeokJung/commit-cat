@@ -131,6 +131,7 @@ pub fn run() {
             commands::activity::get_today_summary,
             commands::activity::get_today_events,
             commands::activity::get_coding_status,
+            commands::activity::add_coding_minute,
             // Growth
             commands::growth::get_level_info,
             commands::growth::get_exp_breakdown,

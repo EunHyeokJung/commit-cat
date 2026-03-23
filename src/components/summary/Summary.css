@@ -1,12 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 .summary {
-  font-family: "Press Start 2P", monospace;
-  background: #1a1a2e;
-  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #fafafa;
+  color: #333;
   min-height: 100vh;
   padding: 24px 20px;
-  image-rendering: pixelated;
   overflow-y: auto;
 }
 
@@ -15,83 +14,100 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .summary__cat-sprite {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   image-rendering: pixelated;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .summary__speech {
-  background: #2a2a4a;
-  border: 2px solid #4a4a6a;
-  border-radius: 4px;
-  padding: 10px 16px;
+  font-family: "Press Start 2P", monospace;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 8px 16px;
   font-size: 9px;
   line-height: 1.6;
-  color: #f0e68c;
+  color: #555;
   text-align: center;
-  position: relative;
-  max-width: 280px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
-.summary__speech::before {
-  content: "";
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 4px solid transparent;
-  border-bottom-color: #4a4a6a;
+/* ── Stats 카드 ── */
+.summary__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.summary__stat {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.summary__stat-icon {
+  font-size: 18px;
+}
+
+.summary__stat-value {
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px;
+  color: #333;
+  font-weight: 700;
+}
+
+.summary__stat-label {
+  font-size: 11px;
+  color: #999;
 }
 
 /* ── 타임라인 ── */
 .summary__timeline {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .summary__timeline-title {
-  font-size: 8px;
-  color: #8888aa;
-  margin-bottom: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #999;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
 }
 
 .summary__event {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  padding: 8px 0;
-  border-left: 2px solid #3a3a5a;
-  margin-left: 8px;
-  padding-left: 14px;
-  position: relative;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.1s;
 }
 
-.summary__event::before {
-  content: "";
-  position: absolute;
-  left: -4px;
-  top: 12px;
-  width: 6px;
-  height: 6px;
-  background: #f0e68c;
-  border-radius: 1px;
+.summary__event:hover {
+  background: #f0f0f0;
 }
 
-.summary__event--level_up::before {
-  background: #ff6b6b;
-  box-shadow: 0 0 6px rgba(255, 107, 107, 0.5);
+.summary__event + .summary__event {
+  margin-top: 2px;
 }
 
 .summary__event-time {
-  font-size: 8px;
-  color: #6a6a8a;
-  min-width: 40px;
+  font-family: "SF Mono", "Menlo", monospace;
+  font-size: 11px;
+  color: #aaa;
+  min-width: 38px;
   flex-shrink: 0;
 }
 
@@ -101,60 +117,43 @@
 }
 
 .summary__event-text {
-  font-size: 8px;
-  line-height: 1.5;
-  color: #d0d0e0;
+  font-size: 13px;
+  color: #444;
+  line-height: 1.4;
 }
 
 .summary__event-xp {
-  font-size: 7px;
-  color: #f0e68c;
-  margin-top: 2px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  color: #e8881c;
+  margin-top: 1px;
+}
+
+.summary__event--level_up {
+  background: #fff8e1;
+  border-radius: 8px;
+}
+
+.summary__event--level_up .summary__event-text {
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  color: #d4760a;
+}
+
+/* ── 구분선 ── */
+.summary__divider {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 4px 0 16px;
 }
 
 /* ── 빈 상태 ── */
 .summary__empty {
   text-align: center;
-  padding: 32px 0;
-  font-size: 8px;
-  color: #6a6a8a;
+  padding: 40px 0;
+  font-size: 13px;
+  color: #bbb;
   line-height: 2;
-}
-
-/* ── 하단 Stats ── */
-.summary__divider {
-  border: none;
-  border-top: 2px solid #3a3a5a;
-  margin: 8px 0 16px;
-}
-
-.summary__stats {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.summary__stat {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 8px;
-}
-
-.summary__stat-icon {
-  font-size: 14px;
-  width: 24px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.summary__stat-label {
-  color: #8888aa;
-  min-width: 80px;
-}
-
-.summary__stat-value {
-  color: #f0e68c;
 }
 
 /* ── 로딩 ── */
@@ -163,11 +162,6 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  font-size: 10px;
-  color: #8888aa;
-  animation: blink 1s step-end infinite;
-}
-
-@keyframes blink {
-  50% { opacity: 0; }
+  font-size: 13px;
+  color: #aaa;
 }

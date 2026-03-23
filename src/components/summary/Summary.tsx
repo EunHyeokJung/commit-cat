@@ -26,6 +26,7 @@ const eventText: Record<string, string> = {
   push: "pushed to remote! \ud83d\ude80",
   coding_hour: "a whole hour of coding! \ud83d\udcaa",
   late_night: "still coding at night... \ud83c\udf19",
+  pomodoro: "focus session complete! \ud83c\udf45",
   level_up: "LEVEL UP! {detail} \ud83c\udf89",
 };
 
@@ -74,23 +75,44 @@ export function Summary() {
     <div className="summary">
       {/* Header */}
       <div className="summary__header">
-        <img
-          className="summary__cat-sprite"
-          src="/assets/cat/brown_stand.png"
-          alt="cat"
-        />
         <div className="summary__speech">
           here's your day, hooman!
         </div>
       </div>
 
+      {/* Stats */}
+      {summary && (
+        <div className="summary__stats">
+          <div className="summary__stat">
+            <span className="summary__stat-icon">{"\ud83d\udcbb"}</span>
+            <span className="summary__stat-value">{formatMinutes(summary.codingMinutes)}</span>
+            <span className="summary__stat-label">Coding</span>
+          </div>
+          <div className="summary__stat">
+            <span className="summary__stat-icon">{"\ud83d\udc3e"}</span>
+            <span className="summary__stat-value">{summary.commits}</span>
+            <span className="summary__stat-label">Commits</span>
+          </div>
+          <div className="summary__stat">
+            <span className="summary__stat-icon">{"\u2b50"}</span>
+            <span className="summary__stat-value">+{summary.expGained}</span>
+            <span className="summary__stat-label">XP Earned</span>
+          </div>
+          <div className="summary__stat">
+            <span className="summary__stat-icon">{"\ud83c\udf1f"}</span>
+            <span className="summary__stat-value">Lv.{xp?.level ?? 1}</span>
+            <span className="summary__stat-label">Level</span>
+          </div>
+        </div>
+      )}
+
       {/* Timeline */}
       <div className="summary__timeline">
-        <div className="summary__timeline-title">today's log</div>
+        <div className="summary__timeline-title">Activity Log</div>
         {events.length === 0 ? (
           <div className="summary__empty">
             no activity yet today...<br />
-            go make some commits! \ud83d\udc3e
+            go make some commits! {"\ud83d\udc3e"}
           </div>
         ) : (
           events.map((ev, i) => (
@@ -106,37 +128,6 @@ export function Summary() {
           ))
         )}
       </div>
-
-      {/* Stats */}
-      {summary && (
-        <>
-          <hr className="summary__divider" />
-          <div className="summary__stats">
-            <div className="summary__stat">
-              <span className="summary__stat-icon">{"\ud83d\udc3e"}</span>
-              <span className="summary__stat-label">Commits</span>
-              <span className="summary__stat-value">{summary.commits}</span>
-            </div>
-            <div className="summary__stat">
-              <span className="summary__stat-icon">{"\ud83d\udcbb"}</span>
-              <span className="summary__stat-label">Coding</span>
-              <span className="summary__stat-value">{formatMinutes(summary.codingMinutes)}</span>
-            </div>
-            <div className="summary__stat">
-              <span className="summary__stat-icon">{"\u2b50"}</span>
-              <span className="summary__stat-label">XP</span>
-              <span className="summary__stat-value">+{summary.expGained}</span>
-            </div>
-            {xp && (
-              <div className="summary__stat">
-                <span className="summary__stat-icon">{"\ud83c\udf1f"}</span>
-                <span className="summary__stat-label">Level</span>
-                <span className="summary__stat-value">Lv.{xp.level}</span>
-              </div>
-            )}
-          </div>
-        </>
-      )}
     </div>
   );
 }

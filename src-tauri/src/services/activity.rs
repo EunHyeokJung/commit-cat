@@ -18,6 +18,7 @@ pub async fn start_monitor(app: AppHandle) {
     let mut last_ide_seen = Instant::now();
     let mut was_ide_running = false;
     let mut sleep_emitted = false;
+    let mut late_night_emitted = false;
 
     loop {
         interval.tick().await;
@@ -52,10 +53,15 @@ pub async fn start_monitor(app: AppHandle) {
             let _ = app.emit("activity:idle", idle_seconds);
         }
 
-        // 4. 밤 시간 체크
+        // 4. 밤 시간 체크 (1회만)
         let hour = chrono::Local::now().hour();
         if is_ide_running && (hour >= 23 || hour < 6) {
-            let _ = app.emit("activity:late-night-coding", hour);
+            if !late_night_emitted {
+                let _ = app.emit("activity:late-night-coding", hour);
+                late_night_emitted = true;
+            }
+        } else {
+            late_night_emitted = false;
         }
 
         was_ide_running = is_ide_running;

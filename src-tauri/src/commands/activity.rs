@@ -16,6 +16,15 @@ pub async fn get_today_events(app: AppHandle) -> Result<Vec<ActivityEvent>, Stri
     Ok(data.today.events)
 }
 
+/// 코딩 1분 추가
+#[tauri::command]
+pub async fn add_coding_minute(app: AppHandle) -> Result<(), String> {
+    let mut data = storage::load(&app)?;
+    data.today.coding_minutes += 1;
+    storage::save(&app, &data)?;
+    Ok(())
+}
+
 /// 현재 코딩 상태
 #[tauri::command]
 pub async fn get_coding_status() -> Result<CodingStatus, String> {

@@ -2,10 +2,11 @@
   "$schema": "https://raw.githubusercontent.com/nicegui-org/nicegui/main/nicegui/json_schemas/tauri-capabilities-v2.json",
   "identifier": "default",
   "description": "Commit Cat default capabilities",
-  "windows": ["cat-overlay", "settings"],
+  "windows": ["cat-overlay", "settings", "summary"],
   "permissions": [
     "core:default",
     "core:window:default",
+    "core:webview:allow-create-webview-window",
     "core:window:allow-set-position",
     "core:window:allow-outer-position",
     "core:window:allow-set-size",

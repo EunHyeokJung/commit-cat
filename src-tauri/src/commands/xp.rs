@@ -66,9 +66,16 @@ pub async fn add_xp(app: AppHandle, amount: u32, source: String) -> Result<AddXp
     }
 
     // source별 통계 업데이트
+    data.today.exp_gained += amount;
     match source.as_str() {
-        "commit" => data.cat.total_commits += 1,
-        "coding_hour" => data.cat.total_coding_minutes += 60,
+        "commit" => {
+            data.cat.total_commits += 1;
+            data.today.commits += 1;
+        }
+        "coding_hour" => {
+            data.cat.total_coding_minutes += 60;
+            data.today.coding_minutes += 60;
+        }
         _ => {}
     }
 
