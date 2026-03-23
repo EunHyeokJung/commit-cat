@@ -26,6 +26,10 @@ export function Settings() {
   const [cloneError, setCloneError] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [xp, setXp] = useState<XpStatus>({ level: 1, currentExp: 0, expToNext: 100 });
+  const [githubToken, setGithubToken] = useState("");
+  const [githubUsername, setGithubUsername] = useState<string | null>(null);
+  const [githubConnecting, setGithubConnecting] = useState(false);
+  const [githubError, setGithubError] = useState("");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [aiKey, setAiKey] = useState("");
   const [aiKeySaved, setAiKeySaved] = useState(false);
@@ -37,13 +41,14 @@ export function Settings() {
       try {
         const [repoList, settings, xpStatus] = await Promise.all([
           invoke<string[]>("get_watched_repos"),
-          invoke<{ catColor?: CatColor; pomodoroMinutes?: number; breakMinutes?: number; notificationsEnabled?: boolean; anthropicApiKey?: string | null }>("get_settings"),
+          invoke<{ catColor?: CatColor; pomodoroMinutes?: number; breakMinutes?: number; githubUsername?: string | null; notificationsEnabled?: boolean; anthropicApiKey?: string | null }>("get_settings"),
           invoke<XpStatus>("get_xp_status"),
         ]);
         setRepos(repoList);
         if (settings.catColor) setCatColor(settings.catColor);
         if (settings.pomodoroMinutes) setFocusMinutes(settings.pomodoroMinutes);
         if (settings.breakMinutes) setBreakMinutes(settings.breakMinutes);
+        if (settings.githubUsername) setGithubUsername(settings.githubUsername);
         if (settings.notificationsEnabled !== undefined) setNotificationsEnabled(settings.notificationsEnabled);
         if (settings.anthropicApiKey) setAiKeySaved(true);
         setXp(xpStatus);
@@ -164,6 +169,32 @@ export function Settings() {
       await invoke("update_settings", { settings: { ...current, breakMinutes: clamped } });
     } catch (e) {
       console.error("Failed to update break minutes:", e);
+    }
+  }, []);
+
+  // GitHub 연결
+  const handleGithubConnect = useCallback(async () => {
+    if (!githubToken.trim()) return;
+    setGithubConnecting(true);
+    setGithubError("");
+    try {
+      const username = await invoke<string>("verify_github_token", { token: githubToken.trim() });
+      setGithubUsername(username);
+      setGithubToken("");
+    } catch (e) {
+      setGithubError(String(e));
+    } finally {
+      setGithubConnecting(false);
+    }
+  }, [githubToken]);
+
+  // GitHub 연결 해제
+  const handleGithubDisconnect = useCallback(async () => {
+    try {
+      await invoke("disconnect_github");
+      setGithubUsername(null);
+    } catch (e) {
+      console.error("Failed to disconnect GitHub:", e);
     }
   }, []);
 
@@ -377,6 +408,46 @@ export function Settings() {
             <span className="settings__toggle-knob" />
           </button>
         </div>
+      </section>
+
+      {/* GitHub */}
+      <section className="settings__section">
+        <h2 className="settings__section-title">GitHub</h2>
+        {githubUsername ? (
+          <div className="settings__github-status">
+            <span>Connected as <strong>@{githubUsername}</strong></span>
+            <button
+              className="settings__github-btn settings__github-btn--disconnect"
+              onClick={handleGithubDisconnect}
+            >
+              Disconnect
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="settings__github-row">
+              <input
+                className="settings__github-input"
+                type="password"
+                placeholder="GitHub Personal Access Token"
+                value={githubToken}
+                onChange={e => setGithubToken(e.target.value)}
+                disabled={githubConnecting}
+                onKeyDown={e => e.key === "Enter" && handleGithubConnect()}
+              />
+              <button
+                className="settings__github-btn settings__github-btn--connect"
+                onClick={handleGithubConnect}
+                disabled={githubConnecting || !githubToken.trim()}
+              >
+                {githubConnecting ? "..." : "Connect"}
+              </button>
+            </div>
+            {githubError && (
+              <div className="settings__github-error">{githubError}</div>
+            )}
+          </>
+        )}
       </section>
 
       {/* Clone Modal */}

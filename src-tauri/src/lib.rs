@@ -129,6 +129,12 @@ pub fn run() {
                 services::git::start_watcher(git_handle).await;
             });
 
+            // GitHub 폴링 시작
+            let gh_handle = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                services::github::start_github_watcher(gh_handle).await;
+            });
+
             Ok(())
         })
         // ── Commands (frontend ↔ backend) ──
@@ -164,6 +170,9 @@ pub fn run() {
             commands::xp::get_xp_status,
             commands::xp::add_xp,
             commands::xp::get_streak_info,
+            // GitHub
+            commands::github::verify_github_token,
+            commands::github::disconnect_github,
             // AI
             commands::ai::chat_with_cat,
         ])

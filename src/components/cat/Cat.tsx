@@ -370,6 +370,23 @@ export function Cat() {
     bubbleTimer.current = setTimeout(() => setBubble(null), duration);
   }, []);
 
+  // ── GitHub 이벤트 ──
+  useEffect(() => {
+    const unlisten = Promise.all([
+      listen<string>("github:star-received", () => {
+        showBubble("someone starred us! \u2B50", 3000);
+        notify("CommitCat", "someone starred your repo! \u2B50");
+      }),
+      listen("github:pr-opened", () => {
+        showBubble("new PR opened! \uD83D\uDD00", 3000);
+      }),
+      listen("github:pr-merged", () => {
+        setCatState("celebrating");
+      }),
+    ]);
+    return () => { unlisten.then(fns => fns.forEach(fn => fn())); };
+  }, [showBubble, setCatState]);
+
   // ── 포모도로 완료 감지 ──
   useEffect(() => {
     if (!pomodoroActive || pomodoroSeconds > 0) return;

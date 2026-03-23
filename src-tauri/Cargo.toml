@@ -31,6 +31,7 @@ directories = "5"      # Cross-platform app data paths
 tokio = { version = "1", features = ["full"] }
 git2 = "0.20"
 libgit2-sys = { version = "0.18", features = ["vendored"] }
+reqwest = { version = "0.12", features = ["json"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 cocoa = "0.26"

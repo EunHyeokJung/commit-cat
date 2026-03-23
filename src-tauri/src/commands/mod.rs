@@ -7,3 +7,4 @@ pub mod settings;
 pub mod fullscreen;
 pub mod xp;
 pub mod ai;
+pub mod github;

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// 앱 설정 (권한 토글 포함)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,6 +33,12 @@ pub struct AppSettings {
     /// 알림 활성화
     #[serde(default = "default_true")]
     pub notifications_enabled: bool,
+    /// GitHub PAT
+    #[serde(default)]
+    pub github_token: Option<String>,
+    /// GitHub username (토큰 검증 시 저장)
+    #[serde(default)]
+    pub github_username: Option<String>,
     /// Anthropic API key (AI 채팅)
     #[serde(default)]
     pub anthropic_api_key: Option<String>,
@@ -56,9 +63,26 @@ impl Default for AppSettings {
             night_hour_end: 6,
             git_repos: vec![],
             notifications_enabled: true,
+            github_token: None,
+            github_username: None,
             anthropic_api_key: None,
         }
     }
+}
+
+/// GitHub 폴링 상태 (중복 방지)
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct GitHubState {
+    /// repo별 알려진 PR ID 목록
+    #[serde(default)]
+    pub last_pr_ids: HashMap<String, Vec<u64>>,
+    /// repo별 PR 상태 (open/merged/closed)
+    #[serde(default)]
+    pub last_pr_states: HashMap<String, HashMap<u64, String>>,
+    /// repo별 마지막 star 수
+    #[serde(default)]
+    pub last_star_counts: HashMap<String, u32>,
 }
 
 /// 로컬 저장 전체 데이터
@@ -70,6 +94,8 @@ pub struct AppData {
     pub cat: CatPersistence,
     pub today: super::activity::DailySummary,
     pub history: Vec<super::activity::DailySummary>,
+    #[serde(default)]
+    pub github_state: GitHubState,
 }
 
 /// 고양이 영구 데이터 (레벨/경험치)
@@ -105,6 +131,7 @@ impl Default for AppData {
             cat: CatPersistence::default(),
             today: super::activity::DailySummary::default(),
             history: vec![],
+            github_state: GitHubState::default(),
         }
     }
 }
