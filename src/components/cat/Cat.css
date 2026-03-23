@@ -326,8 +326,6 @@
   height: 6px;
   border-radius: 1px;
   image-rendering: pixelated;
-  animation: pixel-burst 2s ease-out forwards;
-  --angle: calc(var(--i) * 45deg);
 }
 
 /* 색상별 파티클 */
@@ -346,25 +344,25 @@
   box-shadow: 0 0 4px rgba(208, 208, 208, 0.6);
 }
 
-/* 각 파티클 크기 랜덤화 */
+/* 크기 변화 */
 .cat__pixel-particle:nth-child(odd) { width: 4px; height: 4px; }
 .cat__pixel-particle:nth-child(3n) { width: 8px; height: 8px; }
 
-@keyframes pixel-burst {
-  0% {
-    opacity: 1;
-    transform: translate(0, 0) scale(1);
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform:
-      translate(
-        calc(cos(var(--angle)) * 40px),
-        calc(sin(var(--angle)) * 40px)
-      )
-      scale(0.3);
-  }
-}
+/* 8방향 burst (45도 간격) */
+.cat__pixel-particle--0 { animation: pb-right 1.5s ease-out forwards; }
+.cat__pixel-particle--1 { animation: pb-top-right 1.5s ease-out forwards; }
+.cat__pixel-particle--2 { animation: pb-top 1.5s ease-out forwards; }
+.cat__pixel-particle--3 { animation: pb-top-left 1.5s ease-out forwards; }
+.cat__pixel-particle--4 { animation: pb-left 1.5s ease-out forwards; }
+.cat__pixel-particle--5 { animation: pb-bottom-left 1.5s ease-out forwards; }
+.cat__pixel-particle--6 { animation: pb-bottom 1.5s ease-out forwards; }
+.cat__pixel-particle--7 { animation: pb-bottom-right 1.5s ease-out forwards; }
+
+@keyframes pb-right       { 0% { opacity:1; transform:translate(0,0) scale(1); } 70% { opacity:1; } 100% { opacity:0; transform:translate(40px, 0) scale(0.3); } }
+@keyframes pb-top-right    { 0% { opacity:1; transform:translate(0,0) scale(1); } 70% { opacity:1; } 100% { opacity:0; transform:translate(28px,-28px) scale(0.3); } }
+@keyframes pb-top          { 0% { opacity:1; transform:translate(0,0) scale(1); } 70% { opacity:1; } 100% { opacity:0; transform:translate(0,-40px) scale(0.3); } }
+@keyframes pb-top-left     { 0% { opacity:1; transform:translate(0,0) scale(1); } 70% { opacity:1; } 100% { opacity:0; transform:translate(-28px,-28px) scale(0.3); } }
+@keyframes pb-left         { 0% { opacity:1; transform:translate(0,0) scale(1); } 70% { opacity:1; } 100% { opacity:0; transform:translate(-40px, 0) scale(0.3); } }
+@keyframes pb-bottom-left  { 0% { opacity:1; transform:translate(0,0) scale(1); } 70% { opacity:1; } 100% { opacity:0; transform:translate(-28px, 28px) scale(0.3); } }
+@keyframes pb-bottom       { 0% { opacity:1; transform:translate(0,0) scale(1); } 70% { opacity:1; } 100% { opacity:0; transform:translate(0, 40px) scale(0.3); } }
+@keyframes pb-bottom-right { 0% { opacity:1; transform:translate(0,0) scale(1); } 70% { opacity:1; } 100% { opacity:0; transform:translate(28px, 28px) scale(0.3); } }

@@ -66,7 +66,7 @@ export const useCatStore = create<CatStore>((set) => ({
   mood: "happy",
   level: 1,
   exp: 0,
-  expToNext: 60,
+  expToNext: 100,
   streakDays: 0,
   catColor: "brown",
 

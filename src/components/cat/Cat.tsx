@@ -312,11 +312,7 @@ export function Cat() {
         {showLevelUp && (
           <div className={`cat__level-particles cat__level-particles--${catColor}`}>
             {Array.from({ length: 8 }, (_, i) => (
-              <div
-                key={i}
-                className="cat__pixel-particle"
-                style={{ "--i": i } as React.CSSProperties}
-              />
+              <div key={i} className={`cat__pixel-particle cat__pixel-particle--${i}`} />
             ))}
           </div>
         )}
