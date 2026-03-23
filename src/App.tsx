@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import { Cat } from "./components/cat/Cat";
 import { useCatStore } from "./stores/catStore";
 
@@ -10,14 +11,45 @@ interface ActivityStatus {
   idleSeconds: number;
 }
 
+interface XpResult {
+  level: number;
+  currentExp: number;
+  expToNext: number;
+  leveledUp: boolean;
+}
+
+interface XpStatus {
+  level: number;
+  currentExp: number;
+  expToNext: number;
+}
+
 function App() {
-  const { setState, setActiveIde, setIdleSeconds, addCodingMinute } = useCatStore();
+  const { setState, setActiveIde, setIdleSeconds, addCodingMinute, setLevel, triggerLevelUp } = useCatStore();
 
   // celebrating/interaction 같은 임시 상태의 자동 복귀 타이머
   const tempStateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 코딩 시간 카운터 (1분마다)
   const codingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // XP 코딩 시간 카운터 (60분마다 +5 XP)
+  const xpCodingMinutes = useRef(0);
+
+  // 야간 코딩 XP (세션당 1회)
+  const lateNightXpGiven = useRef(false);
+
+  // 앱 초기화: XP 상태 동기화
+  useEffect(() => {
+    (async () => {
+      try {
+        const status = await invoke<XpStatus>("get_xp_status");
+        setLevel(status.level, status.currentExp, status.expToNext);
+      } catch (e) {
+        console.error("Failed to load XP status:", e);
+      }
+    })();
+  }, [setLevel]);
 
   useEffect(() => {
     const unlisten = Promise.all([
@@ -31,6 +63,15 @@ function App() {
         if (!codingTimer.current) {
           codingTimer.current = setInterval(() => {
             addCodingMinute();
+
+            // XP: 60분마다 +5
+            xpCodingMinutes.current += 1;
+            if (xpCodingMinutes.current >= 60) {
+              xpCodingMinutes.current = 0;
+              invoke<XpResult>("add_xp", { amount: 5, source: "coding_hour" }).then((res) => {
+                setLevel(res.level, res.currentExp, res.expToNext);
+              }).catch(() => {});
+            }
           }, 60_000);
         }
       }),
@@ -62,12 +103,20 @@ function App() {
         }
       }),
 
-      // ── 밤 코딩 → tired ──
+      // ── 밤 코딩 → tired + XP ──
       listen<number>("activity:late-night-coding", () => {
         // coding 상태에서만 tired로
         const current = useCatStore.getState().state;
         if (current === "coding") {
           setState("tired");
+        }
+
+        // 야간 코딩 XP (세션당 1회)
+        if (!lateNightXpGiven.current) {
+          lateNightXpGiven.current = true;
+          invoke<XpResult>("add_xp", { amount: 15, source: "late_night" }).then((res) => {
+            setLevel(res.level, res.currentExp, res.expToNext);
+          }).catch(() => {});
         }
       }),
 
@@ -95,7 +144,7 @@ function App() {
         }
       }),
 
-      // ── Git 커밋 → celebrating (임시) ──
+      // ── Git 커밋 → celebrating (임시) + XP ──
       listen("git:new-commit", () => {
         if (tempStateTimer.current) clearTimeout(tempStateTimer.current);
         setState("celebrating");
@@ -104,6 +153,16 @@ function App() {
           const ide = useCatStore.getState().activeIde;
           setState(ide ? "coding" : "idle");
         }, 3000);
+
+        // 커밋 XP +10
+        invoke<XpResult>("add_xp", { amount: 10, source: "commit" }).then((res) => {
+          setLevel(res.level, res.currentExp, res.expToNext);
+        }).catch(() => {});
+      }),
+
+      // ── XP 레벨업 이벤트 (백엔드에서 emit) ──
+      listen<number>("xp:level-up", (event) => {
+        triggerLevelUp(event.payload);
       }),
 
       // ── 풀스크린 ──
@@ -119,7 +178,7 @@ function App() {
       unlisten.then((fns) => fns.forEach((fn) => fn()));
       if (codingTimer.current) clearInterval(codingTimer.current);
     };
-  }, [setState, setActiveIde, setIdleSeconds, addCodingMinute]);
+  }, [setState, setActiveIde, setIdleSeconds, addCodingMinute, setLevel, triggerLevelUp]);
 
   return <Cat />;
 }

@@ -52,12 +52,7 @@ pub fn run() {
 
             // ── config 기반 트레이 아이콘 설정 ──
             if let Some(tray) = app.tray_by_id("main-tray") {
-                // 우클릭 메뉴: 고양이 색상 선택
                 let menu = MenuBuilder::new(app)
-                    .text("cat-brown", "Brown")
-                    .text("cat-orange", "Orange")
-                    .text("cat-white", "White")
-                    .separator()
                     .text("settings", "Settings...")
                     .separator()
                     .text("quit", "Quit")
@@ -152,6 +147,9 @@ pub fn run() {
             commands::settings::update_settings,
             // Fullscreen
             commands::fullscreen::check_fullscreen,
+            // XP
+            commands::xp::get_xp_status,
+            commands::xp::add_xp,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Commit Cat");

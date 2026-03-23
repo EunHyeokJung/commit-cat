@@ -15,7 +15,7 @@ const annoyedMessages = ["...meow.", "okay okay!", "I'm busy!", "stahp!"];
 type Behavior = "walk" | "stand" | "sit" | "sleep";
 
 export function Cat() {
-  const { catColor, setCatColor, state: catState } = useCatStore();
+  const { catColor, setCatColor, state: catState, levelUp, clearLevelUp } = useCatStore();
   const appWindow = useRef(getCurrentWindow());
 
   // 트레이 메뉴에서 고양이 색상 변경 이벤트 수신
@@ -40,6 +40,22 @@ export function Cat() {
   const bubbleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clickCount = useRef(0);
   const clickResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── 레벨업 연출 ──
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [levelUpLevel, setLevelUpLevel] = useState(0);
+
+  useEffect(() => {
+    if (levelUp !== null) {
+      setLevelUpLevel(levelUp);
+      setShowLevelUp(true);
+      const timer = setTimeout(() => {
+        setShowLevelUp(false);
+        clearLevelUp();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [levelUp, clearLevelUp]);
 
   // ── 행동 ──
   const [behavior, setBehavior] = useState<Behavior>("walk");
@@ -268,9 +284,13 @@ export function Cat() {
   return (
     <div className="cat-window">
       <div className="bubble-area">
-        {bubble && (
+        {showLevelUp ? (
+          <div className="cat__bubble cat__bubble--levelup" key={`lvl-${levelUpLevel}`}>
+            LEVEL UP! Lv.{levelUpLevel}
+          </div>
+        ) : bubble ? (
           <div className="cat__bubble" key={bubbleKey}>{bubble}</div>
-        )}
+        ) : null}
       </div>
       <div
         className={`cat ${isDragging ? "cat--dragging" : ""} ${catState !== "idle" ? `cat--${catState}` : ""}`}
@@ -289,6 +309,17 @@ export function Cat() {
           />
         </div>
         {(behavior === "sleep" || catState === "sleeping") && hasSit && <div className="cat__zzz" style={direction === "right" ? { left: "auto", right: "5px" } : undefined}>z z z</div>}
+        {showLevelUp && (
+          <div className={`cat__level-particles cat__level-particles--${catColor}`}>
+            {Array.from({ length: 8 }, (_, i) => (
+              <div
+                key={i}
+                className="cat__pixel-particle"
+                style={{ "--i": i } as React.CSSProperties}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

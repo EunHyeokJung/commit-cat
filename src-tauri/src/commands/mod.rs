@@ -5,3 +5,4 @@ pub mod pomodoro;
 pub mod git;
 pub mod settings;
 pub mod fullscreen;
+pub mod xp;

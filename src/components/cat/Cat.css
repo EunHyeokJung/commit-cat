@@ -292,3 +292,79 @@
   0% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* ══════════════════════════════════════
+   레벨업 말풍선
+   ══════════════════════════════════════ */
+
+.cat__bubble--levelup {
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  padding: 6px 14px;
+  background: #fff8e1;
+  color: #d4760a;
+  border: 2px solid #f5a623;
+  animation: bubble-pop 0.25s ease-out, bubble-fade 0.5s ease-in 2.5s forwards;
+}
+
+/* ══════════════════════════════════════
+   레벨업 파티클
+   ══════════════════════════════════════ */
+
+.cat__level-particles {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.cat__pixel-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  image-rendering: pixelated;
+  animation: pixel-burst 2s ease-out forwards;
+  --angle: calc(var(--i) * 45deg);
+}
+
+/* 색상별 파티클 */
+.cat__level-particles--orange .cat__pixel-particle {
+  background: #E8881C;
+  box-shadow: 0 0 4px rgba(232, 136, 28, 0.6);
+}
+
+.cat__level-particles--brown .cat__pixel-particle {
+  background: #8B6914;
+  box-shadow: 0 0 4px rgba(139, 105, 20, 0.6);
+}
+
+.cat__level-particles--white .cat__pixel-particle {
+  background: #d0d0d0;
+  box-shadow: 0 0 4px rgba(208, 208, 208, 0.6);
+}
+
+/* 각 파티클 크기 랜덤화 */
+.cat__pixel-particle:nth-child(odd) { width: 4px; height: 4px; }
+.cat__pixel-particle:nth-child(3n) { width: 8px; height: 8px; }
+
+@keyframes pixel-burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform:
+      translate(
+        calc(cos(var(--angle)) * 40px),
+        calc(sin(var(--angle)) * 40px)
+      )
+      scale(0.3);
+  }
+}

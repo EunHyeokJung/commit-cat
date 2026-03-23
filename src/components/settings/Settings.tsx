@@ -4,6 +4,12 @@ import { emit } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import "./Settings.css";
 
+interface XpStatus {
+  level: number;
+  currentExp: number;
+  expToNext: number;
+}
+
 type CatColor = "white" | "brown" | "orange";
 
 export function Settings() {
@@ -17,17 +23,20 @@ export function Settings() {
   const [cloning, setCloning] = useState(false);
   const [cloneError, setCloneError] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [xp, setXp] = useState<XpStatus>({ level: 1, currentExp: 0, expToNext: 100 });
 
   // 초기 데이터 로드
   useEffect(() => {
     (async () => {
       try {
-        const [repoList, settings] = await Promise.all([
+        const [repoList, settings, xpStatus] = await Promise.all([
           invoke<string[]>("get_watched_repos"),
           invoke<{ catColor?: CatColor }>("get_settings"),
+          invoke<XpStatus>("get_xp_status"),
         ]);
         setRepos(repoList);
         if (settings.catColor) setCatColor(settings.catColor);
+        setXp(xpStatus);
       } catch (e) {
         console.error("Failed to load settings:", e);
       } finally {
@@ -192,6 +201,21 @@ export function Settings() {
               </button>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Level */}
+      <section className="settings__section">
+        <h2 className="settings__section-title">Level</h2>
+        <div className="settings__level-row">
+          <span className="settings__level-label">Lv.{xp.level}</span>
+          <div className="settings__xp-bar">
+            <div
+              className="settings__xp-fill"
+              style={{ width: `${xp.expToNext > 0 ? (xp.currentExp / xp.expToNext) * 100 : 0}%` }}
+            />
+          </div>
+          <span className="settings__xp-text">{xp.currentExp} / {xp.expToNext}</span>
         </div>
       </section>
 
