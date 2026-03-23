@@ -3,10 +3,11 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
 
-/// Git HEAD 변경 감지 (폴링 방식 - MVP)
+/// Git HEAD 변경 + push 감지 (폴링 방식 - MVP)
 pub async fn start_watcher(app: AppHandle) {
     let mut interval = tokio::time::interval(Duration::from_secs(30));
     let mut last_heads: HashMap<PathBuf, String> = HashMap::new();
+    let mut last_push_lines: HashMap<PathBuf, usize> = HashMap::new();
 
     loop {
         interval.tick().await;
@@ -14,6 +15,7 @@ pub async fn start_watcher(app: AppHandle) {
         let repos = super::storage::get_watched_repos(&app);
 
         for repo in repos {
+            // ── 커밋 감지 ──
             if let Some(current_head) = read_head(&repo) {
                 let changed = last_heads
                     .get(&repo)
@@ -27,10 +29,38 @@ pub async fn start_watcher(app: AppHandle) {
                     }));
                 }
 
-                last_heads.insert(repo, current_head);
+                last_heads.insert(repo.clone(), current_head);
+            }
+
+            // ── push 감지 ──
+            let push_line_count = count_remote_log_lines(&repo);
+            if push_line_count > 0 {
+                let prev = last_push_lines.get(&repo).copied().unwrap_or(0);
+                if prev > 0 && push_line_count > prev {
+                    let _ = app.emit("git:new-push", serde_json::json!({
+                        "repo": repo.to_string_lossy().to_string(),
+                    }));
+                }
+                last_push_lines.insert(repo, push_line_count);
             }
         }
     }
+}
+
+/// .git/logs/refs/remotes/origin/ 아래 모든 reflog 라인 수 합산
+fn count_remote_log_lines(repo_path: &PathBuf) -> usize {
+    let logs_dir = repo_path.join(".git/logs/refs/remotes/origin");
+    let mut total = 0;
+    if let Ok(entries) = std::fs::read_dir(&logs_dir) {
+        for entry in entries.flatten() {
+            if entry.path().is_file() {
+                if let Ok(content) = std::fs::read_to_string(entry.path()) {
+                    total += content.lines().count();
+                }
+            }
+        }
+    }
+    total
 }
 
 /// .git/HEAD에서 현재 커밋 해시 읽기

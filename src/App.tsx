@@ -160,6 +160,13 @@ function App() {
         }).catch(() => {});
       }),
 
+      // ── Git push → XP +5 ──
+      listen("git:new-push", () => {
+        invoke<XpResult>("add_xp", { amount: 5, source: "push" }).then((res) => {
+          setLevel(res.level, res.currentExp, res.expToNext);
+        }).catch(() => {});
+      }),
+
       // ── XP 레벨업 이벤트 (백엔드에서 emit) ──
       listen<number>("xp:level-up", (event) => {
         triggerLevelUp(event.payload);
