@@ -31,9 +31,10 @@
       }
     ],
     "trayIcon": {
+      "id": "main-tray",
       "iconPath": "icons/tray-icon.png",
       "iconAsTemplate": true,
-      "tooltip": "Commit Cat 🐱"
+      "tooltip": "Commit Cat"
     },
     "security": {
       "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost; style-src 'self' 'unsafe-inline'"

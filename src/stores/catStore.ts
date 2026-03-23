@@ -63,7 +63,7 @@ export const useCatStore = create<CatStore>((set) => ({
   exp: 0,
   expToNext: 60,
   streakDays: 0,
-  catColor: "orange",
+  catColor: "brown",
 
   activeIde: null,
   idleSeconds: 0,

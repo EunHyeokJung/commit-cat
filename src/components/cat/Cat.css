@@ -92,6 +92,14 @@
   height: calc(72px * 1.12 * 0.96);
 }
 
+.cat__image--brown.cat__image--sit {
+  height: calc(72px * 1.12 * 0.96);
+}
+
+.cat__image--brown.cat__image--sleep {
+  height: calc(72px * 1.12 * 0.96);
+}
+
 /* ══════════════════════════════════════
    행동별 애니메이션 (idle)
    ══════════════════════════════════════ */

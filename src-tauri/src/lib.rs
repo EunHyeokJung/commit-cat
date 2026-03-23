@@ -48,6 +48,25 @@ pub fn run() {
                 setup_macos_window(&window);
             }
 
+            // ── config 기반 트레이 아이콘에 클릭 핸들러 연결 ──
+            if let Some(tray) = app.tray_by_id("main-tray") {
+                tray.on_tray_icon_event(|tray, event| {
+                    if let tauri::tray::TrayIconEvent::Click {
+                        button_state: tauri::tray::MouseButtonState::Up,
+                        ..
+                    } = event {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("cat-overlay") {
+                            if window.is_visible().unwrap_or(false) {
+                                let _ = window.hide();
+                            } else {
+                                let _ = window.show();
+                            }
+                        }
+                    }
+                });
+            }
+
             // 활동 모니터 시작
             let monitor_handle = app_handle.clone();
             tauri::async_runtime::spawn(async move {
@@ -80,16 +99,6 @@ pub fn run() {
             // Fullscreen
             commands::fullscreen::check_fullscreen,
         ])
-        // ── Tray icon click handler ──
-        .on_tray_icon_event(|tray, event| {
-            if let tauri::tray::TrayIconEvent::Click { .. } = event {
-                let app = tray.app_handle();
-                if let Some(window) = app.get_webview_window("tray-panel") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
-            }
-        })
         .run(tauri::generate_context!())
         .expect("error while running Commit Cat");
 }
