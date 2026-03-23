@@ -442,6 +442,52 @@
   text-align: center;
 }
 
+/* ── Toggle ── */
+
+.settings__toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.settings__toggle-label {
+  font-size: 14px;
+  color: #555;
+}
+
+.settings__toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border: none;
+  border-radius: 12px;
+  background: #ddd;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+}
+
+.settings__toggle--on {
+  background: #43a047;
+}
+
+.settings__toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.settings__toggle--on .settings__toggle-knob {
+  transform: translateX(20px);
+}
+
 /* ── GitHub / AI shared styles ── */
 
 .settings__github-row {

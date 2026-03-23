@@ -4,8 +4,22 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { LogicalPosition, LogicalSize } from "@tauri-apps/api/dpi";
 import { listen } from "@tauri-apps/api/event";
+import { sendNotification, isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import { useCatStore } from "../../stores/catStore";
 import "./Cat.css";
+
+async function notify(title: string, body: string) {
+  try {
+    const settings = await invoke<{ notificationsEnabled?: boolean }>("get_settings");
+    if (settings.notificationsEnabled === false) return;
+    let granted = await isPermissionGranted();
+    if (!granted) {
+      const perm = await requestPermission();
+      granted = perm === "granted";
+    }
+    if (granted) sendNotification({ title, body });
+  } catch (_) {}
+}
 
 const WIN_W = 200;
 const WIN_W_EXPANDED = 320;
@@ -78,6 +92,15 @@ export function Cat() {
       return () => clearTimeout(timer);
     }
   }, [levelUp, clearLevelUp]);
+
+  // ── Streak 마일스톤 이벤트 수신 ──
+  useEffect(() => {
+    const unlisten = listen<{ days: number; bonus: number }>("streak:milestone", (event) => {
+      showBubble(`${event.payload.days} day streak!`, 4000);
+      setCatState("celebrating");
+    });
+    return () => { unlisten.then(fn => fn()); };
+  }, [showBubble, setCatState]);
 
   // ── 포모도로 tick ──
   useEffect(() => {
@@ -354,6 +377,7 @@ export function Cat() {
     addPomodoro();
     setCatState("celebrating");
     showBubble("focus complete! good job hooman!", 3000);
+    notify("CommitCat", "focus session complete! +20 XP");
     invoke<XpResult>("add_xp", { amount: 20, source: "pomodoro" }).then((res) => {
       setLevel(res.level, res.currentExp, res.expToNext);
       if (res.leveledUp) triggerLevelUp(res.level);
@@ -370,6 +394,7 @@ export function Cat() {
     if (!breakActive || breakSeconds > 0) return;
     stopBreak();
     showBubble("break's over! back to work~", 3000);
+    notify("CommitCat", "break's over! back to work~");
   }, [breakActive, breakSeconds, stopBreak, showBubble]);
 
   // ══════════════════════════════════════

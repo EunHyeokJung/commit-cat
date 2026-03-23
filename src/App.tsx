@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
+import { sendNotification, isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import { Cat } from "./components/cat/Cat";
 import { useCatStore } from "./stores/catStore";
 
@@ -22,6 +23,20 @@ interface XpStatus {
   level: number;
   currentExp: number;
   expToNext: number;
+}
+
+/** 설정 확인 후 알림 전송 */
+async function notify(title: string, body: string) {
+  try {
+    const settings = await invoke<{ notificationsEnabled?: boolean }>("get_settings");
+    if (settings.notificationsEnabled === false) return;
+    let granted = await isPermissionGranted();
+    if (!granted) {
+      const perm = await requestPermission();
+      granted = perm === "granted";
+    }
+    if (granted) sendNotification({ title, body });
+  } catch (_) {}
 }
 
 function App() {
@@ -159,6 +174,8 @@ function App() {
         invoke<XpResult>("add_xp", { amount: 10, source: "commit" }).then((res) => {
           setLevel(res.level, res.currentExp, res.expToNext);
         }).catch(() => {});
+
+        notify("CommitCat", "new commit! +10 XP \uD83D\uDC3E");
       }),
 
       // ── Git push → XP +5 ──
@@ -171,6 +188,7 @@ function App() {
       // ── XP 레벨업 이벤트 (백엔드에서 emit) ──
       listen<number>("xp:level-up", (event) => {
         triggerLevelUp(event.payload);
+        notify("CommitCat", `LEVEL UP! You reached Lv.${event.payload}`);
       }),
 
       // ── 풀스크린 ──

@@ -26,6 +26,7 @@ export function Settings() {
   const [cloneError, setCloneError] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [xp, setXp] = useState<XpStatus>({ level: 1, currentExp: 0, expToNext: 100 });
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [aiKey, setAiKey] = useState("");
   const [aiKeySaved, setAiKeySaved] = useState(false);
   const [aiSaving, setAiSaving] = useState(false);
@@ -36,13 +37,14 @@ export function Settings() {
       try {
         const [repoList, settings, xpStatus] = await Promise.all([
           invoke<string[]>("get_watched_repos"),
-          invoke<{ catColor?: CatColor; pomodoroMinutes?: number; breakMinutes?: number; anthropicApiKey?: string | null }>("get_settings"),
+          invoke<{ catColor?: CatColor; pomodoroMinutes?: number; breakMinutes?: number; notificationsEnabled?: boolean; anthropicApiKey?: string | null }>("get_settings"),
           invoke<XpStatus>("get_xp_status"),
         ]);
         setRepos(repoList);
         if (settings.catColor) setCatColor(settings.catColor);
         if (settings.pomodoroMinutes) setFocusMinutes(settings.pomodoroMinutes);
         if (settings.breakMinutes) setBreakMinutes(settings.breakMinutes);
+        if (settings.notificationsEnabled !== undefined) setNotificationsEnabled(settings.notificationsEnabled);
         if (settings.anthropicApiKey) setAiKeySaved(true);
         setXp(xpStatus);
       } catch (e) {
@@ -164,6 +166,18 @@ export function Settings() {
       console.error("Failed to update break minutes:", e);
     }
   }, []);
+
+  // 알림 토글
+  const handleNotificationsToggle = useCallback(async () => {
+    const next = !notificationsEnabled;
+    setNotificationsEnabled(next);
+    try {
+      const current = await invoke<Record<string, unknown>>("get_settings");
+      await invoke("update_settings", { settings: { ...current, notificationsEnabled: next } });
+    } catch (e) {
+      console.error("Failed to update notifications:", e);
+    }
+  }, [notificationsEnabled]);
 
   // AI API Key 저장
   const handleAiSave = useCallback(async () => {
@@ -349,6 +363,20 @@ export function Settings() {
             </button>
           </div>
         )}
+      </section>
+
+      {/* Notifications */}
+      <section className="settings__section">
+        <h2 className="settings__section-title">Notifications</h2>
+        <div className="settings__toggle-row">
+          <span className="settings__toggle-label">System Notifications</span>
+          <button
+            className={`settings__toggle ${notificationsEnabled ? "settings__toggle--on" : ""}`}
+            onClick={handleNotificationsToggle}
+          >
+            <span className="settings__toggle-knob" />
+          </button>
+        </div>
       </section>
 
       {/* Clone Modal */}
