@@ -2,12 +2,13 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { LogicalPosition } from "@tauri-apps/api/dpi";
+import { LogicalPosition, LogicalSize } from "@tauri-apps/api/dpi";
 import { listen } from "@tauri-apps/api/event";
 import { useCatStore } from "../../stores/catStore";
 import "./Cat.css";
 
 const WIN_W = 200;
+const WIN_W_EXPANDED = 320;
 
 const normalMessages = ["meow!", "nya~", "purr...", "mrrp?", "*stretch*", "code with me~", "prrrr~"];
 const happyMessages = ["love it!", "more pets!", "purrrr~", "nya nya~!"];
@@ -88,21 +89,39 @@ export function Cat() {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+  const handleContextMenu = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY });
+    await appWindow.current.setSize(new LogicalSize(WIN_W_EXPANDED, 150));
+    setContextMenu({ x: 160, y: 30 });
   }, []);
 
   // 외부 클릭 시 메뉴 닫기
+  const closeContextMenu = useCallback(() => {
+    setContextMenu(null);
+    appWindow.current.setSize(new LogicalSize(WIN_W, 150)).catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (!contextMenu) return;
-    const handleClick = () => setContextMenu(null);
+    const handleClick = () => closeContextMenu();
     window.addEventListener("mousedown", handleClick);
     return () => window.removeEventListener("mousedown", handleClick);
+  }, [contextMenu, closeContextMenu]);
+
+  // 메뉴가 윈도우 밖으로 넘어가면 위로 올리기
+  useEffect(() => {
+    if (!contextMenu || !menuRef.current) return;
+    const rect = menuRef.current.getBoundingClientRect();
+    if (rect.bottom > window.innerHeight) {
+      menuRef.current.style.top = `${Math.max(0, contextMenu.y - rect.height)}px`;
+    }
+    if (rect.right > window.innerWidth) {
+      menuRef.current.style.left = `${Math.max(0, contextMenu.x - rect.width)}px`;
+    }
   }, [contextMenu]);
 
   const openSummary = useCallback(async () => {
-    setContextMenu(null);
+    closeContextMenu();
     const existing = await WebviewWindow.getByLabel("summary");
     if (existing) {
       await existing.setFocus();
@@ -119,7 +138,7 @@ export function Cat() {
   }, []);
 
   const openSettings = useCallback(async () => {
-    setContextMenu(null);
+    closeContextMenu();
     const existing = await WebviewWindow.getByLabel("settings");
     if (existing) {
       await existing.setFocus();
@@ -136,7 +155,7 @@ export function Cat() {
   }, []);
 
   const handleStartFocus = useCallback(async () => {
-    setContextMenu(null);
+    closeContextMenu();
     try {
       const settings = await invoke<{ pomodoroMinutes?: number }>("get_settings");
       const minutes = settings.pomodoroMinutes ?? 25;
@@ -147,13 +166,13 @@ export function Cat() {
   }, [startPomodoro]);
 
   const handleStopFocus = useCallback(() => {
-    setContextMenu(null);
+    closeContextMenu();
     stopPomodoro();
     setCatState("idle");
   }, [stopPomodoro, setCatState]);
 
   const handleQuit = useCallback(async () => {
-    setContextMenu(null);
+    closeContextMenu();
     await invoke("quit_app");
   }, []);
 
