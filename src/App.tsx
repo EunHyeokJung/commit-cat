@@ -154,8 +154,8 @@ function App() {
           setState(ide ? "coding" : "idle");
         }, 3000);
 
-        // 커밋 XP +95 (테스트용, 나중에 10으로 복원)
-        invoke<XpResult>("add_xp", { amount: 95, source: "commit" }).then((res) => {
+        // 커밋 XP +10
+        invoke<XpResult>("add_xp", { amount: 10, source: "commit" }).then((res) => {
           setLevel(res.level, res.currentExp, res.expToNext);
         }).catch(() => {});
       }),
