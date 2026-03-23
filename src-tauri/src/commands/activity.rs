@@ -2,11 +2,25 @@ use crate::models::activity::{ActivityEvent, CodingStatus, DailySummary};
 use crate::services::storage;
 use tauri::AppHandle;
 
-/// 오늘 활동 요약
+/// 오늘 활동 요약 (이벤트에서 계산)
 #[tauri::command]
 pub async fn get_today_summary(app: AppHandle) -> Result<DailySummary, String> {
     let data = storage::load(&app)?;
-    Ok(data.today)
+    let mut summary = data.today.clone();
+
+    // 이벤트에서 정확한 값 재계산
+    let mut commits = 0u32;
+    let mut exp = 0u32;
+    for ev in &summary.events {
+        exp += ev.xp;
+        if ev.event_type == "commit" {
+            commits += 1;
+        }
+    }
+    summary.commits = summary.commits.max(commits);
+    summary.exp_gained = summary.exp_gained.max(exp);
+
+    Ok(summary)
 }
 
 /// 오늘 이벤트 목록
