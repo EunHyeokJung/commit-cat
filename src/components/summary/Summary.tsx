@@ -89,35 +89,27 @@ export function Summary() {
         <div className="summary__speech">
           here's your day, hooman!
         </div>
+        <span className="summary__level">Lv.{xp?.level ?? 1}</span>
       </div>
 
       {/* Stats */}
       {summary && (
-        <div className="summary__stats">
-          <div className="summary__stat">
-            <span className="summary__stat-icon">{"\ud83d\udcbb"}</span>
-            <span className="summary__stat-value">{formatMinutes(summary.codingMinutes)}</span>
-            <span className="summary__stat-label">Coding</span>
+        <div className="summary__stats-row">
+          <div className="summary__stat-compact">
+            <span>{"\ud83d\udcbb"}</span>
+            <strong>{formatMinutes(summary.codingMinutes)}</strong>
           </div>
-          <div className="summary__stat">
-            <span className="summary__stat-icon">{"\ud83d\udc3e"}</span>
-            <span className="summary__stat-value">{summary.commits}</span>
-            <span className="summary__stat-label">Commits</span>
+          <div className="summary__stat-compact">
+            <span>{"\ud83d\udc3e"}</span>
+            <strong>{summary.commits}</strong>
           </div>
-          <div className="summary__stat">
-            <span className="summary__stat-icon">{"\u2b50"}</span>
-            <span className="summary__stat-value">+{summary.expGained}</span>
-            <span className="summary__stat-label">XP Earned</span>
+          <div className="summary__stat-compact">
+            <span>{"\u2b50"}</span>
+            <strong>+{summary.expGained}</strong>
           </div>
-          <div className="summary__stat">
-            <span className="summary__stat-icon">{"\ud83d\udd25"}</span>
-            <span className="summary__stat-value">{streak?.streakDays ?? 0}</span>
-            <span className="summary__stat-label">Streak</span>
-          </div>
-          <div className="summary__stat">
-            <span className="summary__stat-icon">{"\ud83c\udf1f"}</span>
-            <span className="summary__stat-value">Lv.{xp?.level ?? 1}</span>
-            <span className="summary__stat-label">Level</span>
+          <div className="summary__stat-compact">
+            <span>{"\ud83d\udd25"}</span>
+            <strong>{streak?.streakDays ?? 0}</strong>
           </div>
         </div>
       )}
