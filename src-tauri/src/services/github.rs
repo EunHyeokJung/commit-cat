@@ -142,9 +142,9 @@ fn add_xp_internal(app: &AppHandle, amount: u32, source: &str) -> Result<(), Str
 
 /// GitHub 폴링 서비스 시작
 pub async fn start_github_watcher(app: AppHandle) {
-    let mut interval = tokio::time::interval(Duration::from_secs(300));
-    // 첫 tick은 즉시 실행되므로 skip
-    interval.tick().await;
+    // 시작 전 잠시 대기 (앱 초기화 완료 후)
+    tokio::time::sleep(Duration::from_secs(5)).await;
+    let mut interval = tokio::time::interval(Duration::from_secs(15));
 
     loop {
         interval.tick().await;
