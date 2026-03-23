@@ -409,6 +409,17 @@
   color: #e53935;
 }
 
+.cat-timer--break .cat-timer__time {
+  color: #43a047;
+}
+
+.cat-timer__label {
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  color: #43a047;
+  letter-spacing: 0.5px;
+}
+
 /* ══════════════════════════════════════
    컨텍스트 메뉴
    ══════════════════════════════════════ */

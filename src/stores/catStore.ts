@@ -39,6 +39,8 @@ interface CatStore {
   pomodoroPaused: boolean;
   pomodoroSeconds: number;
   pomodoroTotal: number;
+  breakActive: boolean;
+  breakSeconds: number;
 
   // Actions
   setState: (state: string) => void;
@@ -56,6 +58,9 @@ interface CatStore {
   resumePomodoro: () => void;
   stopPomodoro: () => void;
   tickPomodoro: () => void;
+  startBreak: (totalSeconds: number) => void;
+  stopBreak: () => void;
+  tickBreak: () => void;
 }
 
 const moodFromState = (state: CatState): CatMood => {
@@ -94,6 +99,8 @@ export const useCatStore = create<CatStore>((set) => ({
   pomodoroPaused: false,
   pomodoroSeconds: 0,
   pomodoroTotal: 0,
+  breakActive: false,
+  breakSeconds: 0,
 
   // Actions
   setState: (state) =>
@@ -145,5 +152,17 @@ export const useCatStore = create<CatStore>((set) => ({
     set((s) => {
       if (!s.pomodoroActive || s.pomodoroPaused || s.pomodoroSeconds <= 0) return {};
       return { pomodoroSeconds: s.pomodoroSeconds - 1 };
+    }),
+
+  startBreak: (totalSeconds) =>
+    set({ breakActive: true, breakSeconds: totalSeconds }),
+
+  stopBreak: () =>
+    set({ breakActive: false, breakSeconds: 0 }),
+
+  tickBreak: () =>
+    set((s) => {
+      if (!s.breakActive || s.breakSeconds <= 0) return {};
+      return { breakSeconds: s.breakSeconds - 1 };
     }),
 }));

@@ -28,6 +28,7 @@ export function Cat() {
   const {
     pomodoroActive, pomodoroPaused, pomodoroSeconds,
     startPomodoro, pausePomodoro, resumePomodoro, stopPomodoro, tickPomodoro,
+    breakActive, breakSeconds, startBreak, stopBreak, tickBreak,
     addPomodoro, setState: setCatState, setLevel, triggerLevelUp,
   } = useCatStore();
   const appWindow = useRef(getCurrentWindow());
@@ -77,6 +78,13 @@ export function Cat() {
     const id = setInterval(() => tickPomodoro(), 1000);
     return () => clearInterval(id);
   }, [pomodoroActive, pomodoroPaused, tickPomodoro]);
+
+  // ── 브레이크 tick ──
+  useEffect(() => {
+    if (!breakActive) return;
+    const id = setInterval(() => tickBreak(), 1000);
+    return () => clearInterval(id);
+  }, [breakActive, tickBreak]);
 
   // 포모도로 시작 시 → coding 상태
   useEffect(() => {
@@ -343,7 +351,19 @@ export function Cat() {
       setLevel(res.level, res.currentExp, res.expToNext);
       if (res.leveledUp) triggerLevelUp(res.level);
     }).catch(() => {});
-  }, [pomodoroActive, pomodoroSeconds, stopPomodoro, addPomodoro, setCatState, showBubble, setLevel, triggerLevelUp]);
+    // 자동 브레이크 시작
+    invoke<{ breakMinutes?: number }>("get_settings").then((s) => {
+      const mins = s.breakMinutes ?? 5;
+      startBreak(mins * 60);
+    }).catch(() => startBreak(5 * 60));
+  }, [pomodoroActive, pomodoroSeconds, stopPomodoro, addPomodoro, setCatState, showBubble, setLevel, triggerLevelUp, startBreak]);
+
+  // ── 브레이크 완료 감지 ──
+  useEffect(() => {
+    if (!breakActive || breakSeconds > 0) return;
+    stopBreak();
+    showBubble("break's over! back to work~", 3000);
+  }, [breakActive, breakSeconds, stopBreak, showBubble]);
 
   // ══════════════════════════════════════
   // 드래그
@@ -442,6 +462,18 @@ export function Cat() {
               className="cat-timer__btn cat-timer__btn--stop"
               onClick={() => { stopPomodoro(); setCatState("idle"); }}
               title="Stop"
+            >
+              {"\u25A0"}
+            </button>
+          </div>
+        ) : breakActive ? (
+          <div className="cat-timer cat-timer--break">
+            <span className="cat-timer__label">BREAK</span>
+            <span className="cat-timer__time">{formatTime(breakSeconds)}</span>
+            <button
+              className="cat-timer__btn cat-timer__btn--stop"
+              onClick={() => stopBreak()}
+              title="Skip"
             >
               {"\u25A0"}
             </button>
