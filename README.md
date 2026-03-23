@@ -1,26 +1,48 @@
 # CommitCat 🐈‍⬛
 
-**CommitCat** is a developer desktop companion that grows with your coding activity.
+A developer desktop companion that grows with your coding activity.
 
-It lives on your desktop, watches your development environment (locally), and reacts to your work — commits, coding time, focus sessions, and more.
+![CommitCat on desktop](assets/example.png)
+
+CommitCat lives on your desktop, watches your development environment locally, and reacts to your work — commits, coding time, focus sessions, and more.
 
 > 🐱 A tiny coding partner that never judges you (even at 3 AM).
 
 ---
 
-## ✨ Features (Planned)
+## ✨ Features
 
-* 🐾 Desktop pet that moves and reacts in real time
-* 👣 Menu bar / system tray companion
-* ⌨️ Coding activity tracking (privacy-friendly)
-* 🐙 Local Git commit tracking
-* ⏱️ Pomodoro focus timer
-* 📊 Daily coding summary visualization
-* 🌱 Level & growth system
-* 💤 Auto hide in fullscreen mode
-* 🤖 Optional AI companion (OpenAI / Anthropic API)
-* 🐳 Docker activity awareness (planned)
-* 💻 VS Code & IntelliJ detection
+- 🐾 Desktop pet with pixel-art sprite — walks, sits, sleeps, and celebrates
+- 👣 Menu bar / system tray companion
+- 🖱️ Draggable — place it anywhere on your screen
+- 💬 Click to chat (speech bubble reactions)
+- 🐙 Local Git commit tracking — reacts every time you commit
+- 💻 IDE detection — knows when you're coding (VS Code, JetBrains, and more)
+- 🌙 Late-night coding awareness
+- 🌱 XP & level system — grows with your activity
+- ✨ Pixel-art level-up animation
+- 🎨 Multi-color cat (orange / brown / white)
+- ⚙️ Settings panel — manage watched repos, cat color, XP progress
+- 💤 Sleeps when you're away
+- 🤖 Optional AI companion (planned)
+- 🐳 Docker activity awareness (planned)
+- ⏱️ Pomodoro focus timer (planned)
+
+---
+
+## 🧠 How It Grows
+
+CommitCat gains XP from:
+
+| Activity | XP |
+|---|---|
+| Git commit | +10 XP |
+| 1 hour of coding | +5 XP |
+| Late-night session | +15 XP |
+
+Level up formula: **Level n → n+1 requires n × 100 XP**
+
+The more you build, the happier it becomes.
 
 ---
 
@@ -28,87 +50,79 @@ It lives on your desktop, watches your development environment (locally), and re
 
 CommitCat is designed for developers who care about privacy.
 
-* ❌ No code is collected
-* ❌ No keystrokes are recorded
-* ❌ No files are uploaded
-* ❌ No telemetry by default
+- ❌ No code is collected
+- ❌ No keystrokes are recorded
+- ❌ No files are uploaded
+- ❌ No telemetry by default
 
-✔️ All data is stored locally on your machine
+✔️ All data is stored locally on your machine  
 ✔️ External integrations are opt-in only
-
----
-
-## 🧠 How It Grows
-
-CommitCat gains experience from:
-
-* Coding time
-* Git commits
-* Completed focus sessions
-* Consistent activity (streaks)
-
-The more you build, the happier it becomes.
 
 ---
 
 ## 🖥️ Platforms
 
-Planned support:
-
-* Windows
-* macOS
-* (Linux later)
+- ✅ macOS
+- 🔜 Windows
+- 🔜 Linux
 
 ---
 
 ## 📦 Installation
 
-🚧 **Pre-release — binaries not yet available**
+🚧 Pre-release — binaries not yet available.
 
-When available, download from:
+When available, download from the [Releases page](https://github.com/eunseo9311/commit-cat/releases).
 
-👉 **Releases page**
+**macOS**
+```
+CommitCat.dmg
+```
 
-Windows:
-
+**Windows**
 ```
 CommitCat-Setup.exe
 ```
 
-macOS:
+### Build from source
 
+```bash
+git clone https://github.com/eunseo9311/commit-cat.git
+cd commit-cat
+npm install
+npm run tauri dev
 ```
-CommitCat.dmg
-```
+
+**Requirements:** Node.js, Rust, Tauri CLI
 
 ---
 
 ## 🛠️ Built With
 
-* Tauri (lightweight desktop framework)
-* React
-* Rust (system integration)
+- [Tauri](https://tauri.app/) — lightweight desktop framework
+- [React](https://react.dev/) — UI
+- [Rust](https://www.rust-lang.org/) — system integration, Git & IDE tracking
 
 ---
 
 ## 🗺️ Roadmap
 
-### MVP
+**MVP ✅**
+- [x] Desktop pet rendering
+- [x] Activity & IDE detection
+- [x] Local Git integration
+- [x] XP & growth system
+- [x] Tray / menu bar UI
+- [x] Settings panel
 
-* Desktop pet rendering
-* Activity detection
-* Local Git integration
-* Basic growth system
-* Tray / menu bar UI
-
-### Future
-
-* GitHub integration
-* Docker integration
-* IDE plugins
-* Custom skins
-* Plugin system
-* Cloud sync (optional)
+**Next**
+- [ ] Pomodoro focus timer
+- [ ] Daily coding summary
+- [ ] GitHub integration
+- [ ] Docker integration
+- [ ] IDE plugins
+- [ ] Custom skins
+- [ ] Cloud sync (optional)
 
 ---
 
@@ -116,21 +130,9 @@ CommitCat.dmg
 
 Contributions are welcome!
 
-If you want to help:
-
-* Open an issue
-* Suggest features
-* Submit pull requests
-
----
-
-## ⭐ Why CommitCat?
-
-Most productivity tools track you.
-
-CommitCat **lives with you.**
-
-It celebrates your commits, keeps you company during late-night debugging, and quietly disappears when you need focus.
+- Open an issue
+- Suggest features
+- Submit pull requests
 
 ---
 
@@ -142,8 +144,5 @@ MIT License
 
 ## 💬 Status
 
-🚧 Early development — not production ready
-
+🚧 MVP complete — actively developing  
 If you like the idea, consider giving the repo a ⭐
-
----
