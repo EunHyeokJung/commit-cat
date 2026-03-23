@@ -64,12 +64,24 @@
 }
 
 /* 색상별 크기 보정 */
+.cat__image--white.cat__image--walk {
+  height: calc(72px * 1.18 * 0.98);
+}
+
 .cat__image--orange {
   height: calc(72px * 1.1);
 }
 
 .cat__image--orange.cat__image--walk {
   height: calc(72px * 1.1 * 0.92);
+}
+
+.cat__image--orange.cat__image--sit {
+  height: calc(72px * 1.1 * 0.96);
+}
+
+.cat__image--orange.cat__image--sleep {
+  height: calc(72px * 1.1 * 0.96);
 }
 
 .cat__image--brown {
@@ -183,8 +195,8 @@
 
 .cat__zzz {
   position: absolute;
-  top: 0px;
-  right: -4px;
+  top: -5px;
+  left: 5px;
   font-size: 11px;
   color: #999;
   font-weight: bold;

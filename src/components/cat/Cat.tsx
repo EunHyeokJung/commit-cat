@@ -11,6 +11,8 @@ const normalMessages = ["meow!", "nya~", "purr...", "mrrp?", "*stretch*", "code 
 const happyMessages = ["love it!", "more pets!", "purrrr~", "nya nya~!"];
 const annoyedMessages = ["...meow.", "okay okay!", "I'm busy!", "stahp!"];
 
+type Behavior = "walk" | "stand" | "sit" | "sleep";
+
 export function Cat() {
   const { catColor } = useCatStore();
   const appWindow = useRef(getCurrentWindow());
@@ -30,27 +32,90 @@ export function Cat() {
   const clickCount = useRef(0);
   const clickResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── 행동 ──
+  const [behavior, setBehavior] = useState<Behavior>("walk");
+
+  // ── sleep 전용 상태 ──
+  const sleepStartTime = useRef(0);
+  const sleepClickCount = useRef(0);
+  const sleepWakeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 행동 전환: walk <-> stand <-> sit <-> sleep
+  useEffect(() => {
+    let duration: number;
+    let next: Behavior;
+
+    if (behavior === "walk") {
+      duration = 5000 + Math.random() * 5000;
+      next = "stand";
+    } else if (behavior === "stand") {
+      if (Math.random() < 0.5) {
+        duration = 2000 + Math.random() * 3000;
+        next = "walk";
+      } else {
+        duration = 2000 + Math.random() * 2000;
+        next = "sit";
+      }
+    } else if (behavior === "sit") {
+      // sleep에서 깨워진 sit인 경우 다시 sleep으로
+      if (sleepStartTime.current > 0 && Date.now() - sleepStartTime.current < 30000) {
+        duration = 1500 + Math.random() * 1000;
+        next = "sleep";
+      } else if (Math.random() < 0.5) {
+        duration = 2000 + Math.random() * 2000;
+        next = "sleep";
+      } else {
+        duration = 5000 + Math.random() * 3000;
+        next = "stand";
+      }
+    } else {
+      // sleep -> 30초 후 stand
+      duration = 30000 + Math.random() * 10000;
+      next = "stand";
+    }
+
+    const id = setTimeout(() => {
+      if (next !== "sleep" && next !== "sit") {
+        sleepStartTime.current = 0;
+        sleepClickCount.current = 0;
+      }
+      if (next === "sleep" && sleepStartTime.current === 0) {
+        sleepStartTime.current = Date.now();
+        sleepClickCount.current = 0;
+      }
+      setBehavior(next);
+      if (next === "walk") {
+        setDirection(Math.random() > 0.5 ? "right" : "left");
+      }
+    }, duration);
+    return () => clearTimeout(id);
+  }, [behavior]);
+
   // ══════════════════════════════════════
-  // 걷기 프레임: 단순 setInterval로 0/1 토글
+  // 걷기 프레임: walk일 때만 stand/walk 교차
   // ══════════════════════════════════════
   const [frame, setFrame] = useState(0);
 
   useEffect(() => {
+    if (behavior !== "walk") { setFrame(0); return; }
+
     const id = setInterval(() => {
       setFrame(prev => (prev === 0 ? 1 : 0));
     }, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [behavior]);
 
-  // 이미지 경로: frame에 따라 stand/walk 교차
-  const imageSrc = frame === 0
-    ? `/assets/cat/${catColor}_stand.png`
-    : `/assets/cat/${catColor}_walk.png`;
+  // 이미지 경로 결정
+  const getImageSrc = () => {
+    if (behavior === "sleep") return `/assets/cat/${catColor}_sit2.png`;
+    if (behavior === "sit") return `/assets/cat/${catColor}_sit.png`;
+    if (behavior === "stand") return `/assets/cat/${catColor}_stand.png`;
+    return frame === 0
+      ? `/assets/cat/${catColor}_stand.png`
+      : `/assets/cat/${catColor}_walk.png`;
+  };
+  const imageSrc = getImageSrc();
 
-  // 임시: 흰 고양이 비교용
-  const whiteImageSrc = frame === 0
-    ? `/assets/cat/white_stand.png`
-    : `/assets/cat/white_walk.png`;
 
 
   // ══════════════════════════════════════
@@ -63,18 +128,23 @@ export function Cat() {
     } catch (_) {}
   }, []);
 
+  // macOS Dock 높이(약 70px) 고려하여 y 제한
+  const maxY = useRef(window.screen.height - 150 - 70);
+
   useEffect(() => {
     (async () => {
       try {
         const pos = await appWindow.current.outerPosition();
-        winPosRef.current = { x: pos.x, y: pos.y };
+        const clampedY = Math.min(pos.y, maxY.current);
+        winPosRef.current = { x: pos.x, y: clampedY };
+        if (pos.y > maxY.current) moveWindow(pos.x, clampedY);
       } catch (_) {}
     })();
-  }, []);
+  }, [moveWindow]);
 
-  // ── 걸어다니기: walk 프레임(frame===1)일 때만 이동, stand(frame===0)일 때 정지 ──
+  // ── 걸어다니기: walk 행동 + walk 프레임일 때만 이동 ──
   useEffect(() => {
-    if (isDragging || frame === 0) return;
+    if (isDragging || behavior !== "walk" || frame === 0) return;
     const id = setInterval(() => {
       const pos = winPosRef.current;
       const speed = 0.75;
@@ -85,7 +155,7 @@ export function Cat() {
       moveWindow(newX, pos.y);
     }, 30);
     return () => clearInterval(id);
-  }, [direction, isDragging, moveWindow, frame]);
+  }, [direction, isDragging, moveWindow, frame, behavior]);
 
   // ══════════════════════════════════════
   // 말풍선
@@ -130,9 +200,28 @@ export function Cat() {
   // ══════════════════════════════════════
   // 클릭
   // ══════════════════════════════════════
+  const sleepAnnoyedMessages = ["zzz... stop...", "let me sleep...", "5 more minutes...", "go away..."];
+
   const handleClick = async () => {
     if (didDrag.current) return;
     try { await invoke<string>("click_cat"); } catch (_) {}
+
+    // sleep 중 클릭: 잠깐 눈 뜨고 다시 잠들기
+    if (behavior === "sleep") {
+      sleepClickCount.current += 1;
+      if (sleepClickCount.current >= 5) {
+        const msg = sleepAnnoyedMessages[Math.floor(Math.random() * sleepAnnoyedMessages.length)];
+        showBubble(msg);
+      } else {
+        showBubble("...mrrp?", 1500);
+      }
+      // 눈 뜨기 (sit) -> 2초 후 다시 잠들기 (sleep)
+      setBehavior("sit");
+      if (sleepWakeTimer.current) clearTimeout(sleepWakeTimer.current);
+      sleepWakeTimer.current = setTimeout(() => setBehavior("sleep"), 2000);
+      return;
+    }
+
     clickCount.current += 1;
     const count = clickCount.current;
     if (clickResetTimer.current) clearTimeout(clickResetTimer.current);
@@ -163,18 +252,13 @@ export function Cat() {
           style={{ transform: isFlipped ? "scaleX(-1)" : "scaleX(1)" }}
         >
           <img
-            className={`cat__image cat__image--${catColor} ${frame === 1 ? "cat__image--walk" : ""}`}
+            className={`cat__image cat__image--${catColor} ${behavior === "walk" && frame === 1 ? "cat__image--walk" : ""} ${behavior === "sit" ? "cat__image--sit" : ""} ${behavior === "sleep" ? "cat__image--sleep" : ""}`}
             src={imageSrc}
             alt="cat"
             draggable={false}
           />
-          <img
-            className={`cat__image cat__image--white ${frame === 1 ? "cat__image--walk" : ""}`}
-            src={whiteImageSrc}
-            alt="white cat"
-            draggable={false}
-          />
         </div>
+        {behavior === "sleep" && <div className="cat__zzz">z z z</div>}
       </div>
     </div>
   );
