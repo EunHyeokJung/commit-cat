@@ -89,7 +89,7 @@ CommitCat is designed for developers who care about privacy.
 
 - ✅ macOS
 - ✅ Windows
-- 🔜 Linux
+- ✅ Linux
 
 ---
 
@@ -105,6 +105,12 @@ CommitCat.dmg
 **Windows**
 ```
 CommitCat-Setup.exe
+```
+
+**Linux**
+```
+CommitCat.AppImage   # Most distros
+CommitCat.deb        # Debian/Ubuntu
 ```
 
 ### Build from source
@@ -148,7 +154,7 @@ npm run tauri dev
 - [x] Windows support
 
 **Next**
-- [ ] Linux support
+- [x] Linux support
 - [x] Docker integration
 - [ ] IDE plugins
 - [ ] Custom skins

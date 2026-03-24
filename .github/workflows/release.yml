@@ -17,11 +17,27 @@ jobs:
             args: '--target aarch64-apple-darwin'
           - platform: windows-latest
             args: ''
+          - platform: ubuntu-22.04
+            args: '--target x86_64-unknown-linux-gnu'
 
     runs-on: ${{ matrix.platform }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libglib2.0-dev \
+            libgtk-3-dev \
+            libssl-dev \
+            libgit2-dev
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -53,6 +69,8 @@ jobs:
             | 🍎 macOS (Apple Silicon) | `.dmg` | Mac 설치 파일 (M1/M2/M3/M4) |
             | 🪟 Windows | `.exe` (setup) | Windows 설치 파일 (권장) |
             | 🪟 Windows | `.msi` | Windows MSI 설치 파일 |
+            | 🐧 Linux | `.AppImage` | Linux 실행 파일 (대부분의 배포판) |
+            | 🐧 Linux | `.deb` | Debian/Ubuntu 패키지 |
 
             > ⚠️ 현재 Intel Mac은 지원하지 않습니다.
 
