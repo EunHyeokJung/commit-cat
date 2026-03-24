@@ -2,8 +2,8 @@
 
 /* ── 윈도우 레이아웃 ── */
 .cat-window {
-  width: 200px;
-  height: 150px;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;

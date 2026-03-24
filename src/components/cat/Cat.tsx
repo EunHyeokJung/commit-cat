@@ -465,11 +465,19 @@ export function Cat() {
   // ══════════════════════════════════════
   const [isAiBubble, setIsAiBubble] = useState(false);
 
-  const dismissBubble = useCallback(() => {
+  const dismissBubble = useCallback(async () => {
     setBubble(null);
     if (isAiBubble) {
       setIsAiBubble(false);
-      appWindow.current.setSize(new LogicalSize(WIN_W, 150)).catch(() => {});
+      try {
+        const pos = await appWindow.current.outerPosition();
+        const scale = await appWindow.current.scaleFactor();
+        await appWindow.current.setSize(new LogicalSize(WIN_W, 150));
+        await appWindow.current.setPosition(new LogicalPosition(
+          Math.round(pos.x / scale),
+          Math.round(pos.y / scale + 150)
+        ));
+      } catch (_) {}
     }
   }, [isAiBubble]);
 
@@ -652,7 +660,13 @@ export function Cat() {
     try {
       const response = await invoke<string>("chat_with_cat", { message: msg });
       // AI 응답: 윈도우 넓히고, 클릭할 때까지 유지
-      await appWindow.current.setSize(new LogicalSize(WIN_W_EXPANDED, 220));
+      const pos = await appWindow.current.outerPosition();
+      const scale = await appWindow.current.scaleFactor();
+      await appWindow.current.setSize(new LogicalSize(WIN_W_EXPANDED, 300));
+      await appWindow.current.setPosition(new LogicalPosition(
+        Math.round(pos.x / scale),
+        Math.round(pos.y / scale - 150)
+      ));
       if (bubbleTimer.current) clearTimeout(bubbleTimer.current);
       setBubble(response);
       setBubbleKey(k => k + 1);
