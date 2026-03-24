@@ -1,6 +1,6 @@
 [package]
 name = "commit-cat"
-version = "0.1.0"
+version = "0.2.1"
 description = "A developer desktop pet that grows with your coding activity"
 authors = ["you"]
 license = "MIT"
