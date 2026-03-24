@@ -86,16 +86,14 @@ CommitCat is designed for developers who care about privacy.
 ## 🖥️ Platforms
 
 - ✅ macOS
-- 🔜 Windows
+- ✅ Windows
 - 🔜 Linux
 
 ---
 
 ## 📦 Installation
 
-🚧 Pre-release — binaries not yet available.
-
-When available, download from the [Releases page](https://github.com/eunseo9311/commit-cat/releases).
+Download from the [Releases page](https://github.com/eunseo9311/commit-cat/releases).
 
 **macOS**
 ```
@@ -145,8 +143,10 @@ npm run tauri dev
 - [x] GitHub integration (PR tracking, star notifications)
 - [x] Claude AI chat companion
 - [x] macOS notifications
+- [x] Windows support
 
 **Next**
+- [ ] Linux support
 - [ ] Docker integration
 - [ ] IDE plugins
 - [ ] Custom skins
