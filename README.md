@@ -42,7 +42,7 @@ CommitCat lives on your desktop, watches your development environment locally, a
 
 ### Settings
 - ⚙️ Settings panel — manage watched repos, cat color, timer durations, API keys, and XP progress
-- 🐳 Docker activity awareness (planned)
+- 🐳 Docker activity awareness — container start/build detection with XP
 
 ---
 
@@ -59,6 +59,8 @@ CommitCat gains XP from:
 | Pomodoro complete | +20 XP |
 | GitHub PR opened | +20 XP |
 | GitHub PR merged | +30 XP |
+| Docker container start | +5 XP |
+| Docker build complete | +15 XP |
 | 3-day streak | +50 XP |
 | 7-day streak | +100 XP |
 | 30-day streak | +500 XP |
@@ -147,7 +149,7 @@ npm run tauri dev
 
 **Next**
 - [ ] Linux support
-- [ ] Docker integration
+- [x] Docker integration
 - [ ] IDE plugins
 - [ ] Custom skins
 - [ ] Cloud sync (optional)

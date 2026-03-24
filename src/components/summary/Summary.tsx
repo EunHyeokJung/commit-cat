@@ -34,6 +34,8 @@ const eventText: Record<string, string> = {
   pomodoro: "focus session complete! \ud83c\udf45",
   pr_open: "opened a PR! \ud83d\udd00",
   pr_merge: "PR merged! \ud83c\udf89",
+  docker_start: "spun up a container! \ud83d\udc33",
+  docker_build: "docker build complete! \ud83d\udc33",
   level_up: "LEVEL UP! {detail} \ud83c\udf89",
   streak: "{detail} \ud83d\udd25",
 };

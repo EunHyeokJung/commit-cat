@@ -142,6 +142,12 @@ pub fn run() {
                 services::github::start_github_watcher(gh_handle).await;
             });
 
+            // Docker 활동 감지 시작
+            let docker_handle = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                services::docker::start_watcher(docker_handle).await;
+            });
+
             // 업데이트 체크 시작
             let update_handle = app_handle.clone();
             tauri::async_runtime::spawn(async move {

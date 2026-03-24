@@ -203,6 +203,26 @@ function App() {
         notify("CommitCat", `LEVEL UP! You reached Lv.${event.payload}`);
       }),
 
+      // ── Docker 컨테이너 시작 → coding (IDE 미감지 시) ──
+      listen<string>("docker:container-started", () => {
+        const current = useCatStore.getState().state;
+        if (current === "idle" || current === "sleeping") {
+          setState("coding");
+        }
+      }),
+
+      // ── Docker 빌드 완료 → celebrating ──
+      listen("docker:build-complete", () => {
+        if (tempStateTimer.current) clearTimeout(tempStateTimer.current);
+        setState("celebrating");
+        tempStateTimer.current = setTimeout(() => {
+          const ide = useCatStore.getState().activeIde;
+          setState(ide ? "coding" : "idle");
+        }, 3000);
+
+        notify("CommitCat", "docker build complete! +15 XP 🐳");
+      }),
+
       // ── 풀스크린 ──
       listen<boolean>("activity:fullscreen", async (event) => {
         const { getCurrentWindow } = await import("@tauri-apps/api/window");
