@@ -204,10 +204,13 @@ function App() {
       }),
 
       // ── 풀스크린 ──
-      listen<boolean>("activity:fullscreen", (event) => {
-        const el = document.getElementById("root");
-        if (el) {
-          el.style.display = event.payload ? "none" : "block";
+      listen<boolean>("activity:fullscreen", async (event) => {
+        const { getCurrentWindow } = await import("@tauri-apps/api/window");
+        const win = getCurrentWindow();
+        if (event.payload) {
+          await win.hide();
+        } else {
+          await win.show();
         }
       }),
     ]);
