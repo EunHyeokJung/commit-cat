@@ -148,6 +148,12 @@ pub fn run() {
                 services::docker::start_watcher(docker_handle).await;
             });
 
+            // 플러그인 HTTP 서버 시작 (VS Code 등 외부 연동)
+            let server_handle = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                services::plugin_server::start_server(server_handle).await;
+            });
+
             // 업데이트 체크 시작
             let update_handle = app_handle.clone();
             tauri::async_runtime::spawn(async move {

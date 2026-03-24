@@ -4,4 +4,5 @@ pub mod git;
 pub mod state_machine;
 pub mod github;
 pub mod docker;
+pub mod plugin_server;
 pub mod update;

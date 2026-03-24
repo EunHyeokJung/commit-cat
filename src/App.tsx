@@ -223,6 +223,42 @@ function App() {
         notify("CommitCat", "docker build complete! +15 XP 🐳");
       }),
 
+      // ── Plugin: 코딩 활동 → coding 상태 유지 ──
+      listen("plugin:coding-active", () => {
+        const current = useCatStore.getState().state;
+        if (current === "idle" || current === "sleeping") {
+          setState("coding");
+        }
+        startCodingTimer();
+      }),
+
+      // ── Plugin: 파일 저장 → celebrating (임시) ──
+      listen("plugin:save", () => {
+        if (tempStateTimer.current) clearTimeout(tempStateTimer.current);
+        setState("celebrating");
+        tempStateTimer.current = setTimeout(() => {
+          const ide = useCatStore.getState().activeIde;
+          setState(ide ? "coding" : "idle");
+        }, 3000);
+      }),
+
+      // ── Plugin: 빌드 성공 → celebrating + 알림 ──
+      listen("plugin:build-success", () => {
+        if (tempStateTimer.current) clearTimeout(tempStateTimer.current);
+        setState("celebrating");
+        tempStateTimer.current = setTimeout(() => {
+          const ide = useCatStore.getState().activeIde;
+          setState(ide ? "coding" : "idle");
+        }, 3000);
+
+        notify("CommitCat", "build succeeded! +15 XP 🔨");
+      }),
+
+      // ── Plugin: 빌드 실패 ──
+      listen("plugin:build-fail", () => {
+        // 상태 변경 없음 — 고양이가 슬퍼할 수 있지만 별도 상태 없으므로 로그만
+      }),
+
       // ── 풀스크린 ──
       listen<boolean>("activity:fullscreen", async (event) => {
         const { getCurrentWindow } = await import("@tauri-apps/api/window");

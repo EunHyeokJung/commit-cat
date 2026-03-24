@@ -36,6 +36,7 @@ const eventText: Record<string, string> = {
   pr_merge: "PR merged! \ud83c\udf89",
   docker_start: "spun up a container! \ud83d\udc33",
   docker_build: "docker build complete! \ud83d\udc33",
+  build_success: "build succeeded! \ud83d\udd28",
   level_up: "LEVEL UP! {detail} \ud83c\udf89",
   streak: "{detail} \ud83d\udd25",
 };
