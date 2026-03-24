@@ -25,14 +25,15 @@ async function notify(title: string, body: string) {
 const WIN_W = 200;
 const WIN_W_EXPANDED = 320;
 
-const normalMessages = ["meow!", "nya~", "purr...", "mrrp?", "*stretch*", "code with me~", "prrrr~"];
-const happyMessages = ["love it!", "more pets!", "purrrr~", "nya nya~!"];
-const annoyedMessages = ["...meow.", "okay okay!", "I'm busy!", "stahp!"];
+const normalMessages = ["hey there~ 😺", "what's up? 🐾", "hi hi~ 💛", "oh, hello! 😸", "noticed me? 👀"];
+const happyMessages = ["that feels nice~ 💛", "more more! 😻", "you're the best 🥰", "hehe~ 😸"];
+const annoyedMessages = ["okay I get it 😑", "a bit much... 🙄", "I was napping! 😾", "not now please 😤"];
 const codingMessages = [
-  "nice code~", "watching you code!", "you're doing great!",
-  "hmm interesting...", "*peeks at screen*", "keep going!",
-  "meow~ what's this?", "so focused!", "need a break?",
-  "cool logic!", "don't forget to save~", "purrr~ good work",
+  "you're on a roll today 🔥", "ooh that's clean code 👀",
+  "don't forget to save 💾", "hydration check! 💧",
+  "nice focus session 💪", "you've been at it, take a breather? ☕",
+  "this is coming together nicely ✨", "smooth typing today 🎹",
+  "I believe in you 💛", "commit when you're ready 📦",
 ];
 
 type Behavior = "walk" | "stand" | "sit" | "sleep";
@@ -85,7 +86,7 @@ function TimerDisplay({ showBubble }: { showBubble: (msg: string, duration?: num
     stopPomodoro();
     addPomodoro();
     setCatState("celebrating");
-    showBubble("focus done! good job!", 3000);
+    showBubble("focus session complete! 🎉", 3000);
     notify("CommitCat", "focus session complete! +20 XP");
     invoke<XpResult>("add_xp", { amount: 20, source: "pomodoro" }).then((res) => {
       setLevel(res.level, res.currentExp, res.expToNext);
@@ -101,7 +102,7 @@ function TimerDisplay({ showBubble }: { showBubble: (msg: string, duration?: num
   useEffect(() => {
     if (!breakActive || breakSeconds > 0) return;
     stopBreak();
-    showBubble("break's over! back to work~", 3000);
+    showBubble("break's over, let's go! 💪", 3000);
     notify("CommitCat", "break's over! back to work~");
   }, [breakActive, breakSeconds, stopBreak, showBubble]);
 
@@ -495,11 +496,11 @@ export function Cat() {
   useEffect(() => {
     const unlisten = Promise.all([
       listen<string>("github:star-received", () => {
-        showBubble("someone starred us! \u2B50", 3000);
+        showBubble("someone starred us! ⭐", 3000);
         notify("CommitCat", "someone starred your repo! \u2B50");
       }),
       listen("github:pr-opened", () => {
-        showBubble("new PR opened! \uD83D\uDD00", 3000);
+        showBubble("new PR opened! 🔀", 3000);
       }),
       listen("github:pr-merged", () => {
         setCatState("celebrating");
@@ -576,7 +577,7 @@ export function Cat() {
     };
     const handleUp = () => {
       setIsDragging(false);
-      if (didDrag.current) showBubble("wheee~!", 1500);
+      if (didDrag.current) showBubble("wheee~! 🎢", 1500);
     };
     window.addEventListener("mousemove", handleMove);
     window.addEventListener("mouseup", handleUp);
@@ -589,7 +590,7 @@ export function Cat() {
   // ══════════════════════════════════════
   // 클릭
   // ══════════════════════════════════════
-  const sleepAnnoyedMessages = ["zzz... stop...", "let me sleep...", "5 more minutes...", "go away..."];
+  const sleepAnnoyedMessages = ["five more minutes... 😴", "shh I'm dreaming 💤", "come back later... 🌙", "not now... 😾"];
 
   const handleClick = () => {
     if (didDrag.current) return;
@@ -605,7 +606,7 @@ export function Cat() {
           const msg = sleepAnnoyedMessages[Math.floor(Math.random() * sleepAnnoyedMessages.length)];
           showBubble(msg);
         } else {
-          showBubble("...mrrp?", 1500);
+          showBubble("hmm...? 😪", 1500);
         }
         setBehavior("sit");
         if (sleepWakeTimer.current) clearTimeout(sleepWakeTimer.current);
@@ -630,11 +631,11 @@ export function Cat() {
     try {
       const settings = await invoke<{ anthropicApiKey?: string | null }>("get_settings");
       if (!settings.anthropicApiKey) {
-        showBubble("set API key in settings first~", 3000);
+        showBubble("set API key in settings first 🔑", 3000);
         return;
       }
     } catch (_) {
-      showBubble("mrrp? something went wrong...", 2000);
+      showBubble("something went wrong... 😿", 2000);
       return;
     }
     await appWindow.current.setSize(new LogicalSize(220, 180));
@@ -656,7 +657,7 @@ export function Cat() {
     setChatOpen(false);
     setChatInput("");
     await appWindow.current.setSize(new LogicalSize(WIN_W, 150));
-    showBubble("thinking...", 30000);
+    showBubble("thinking... 🤔", 30000);
     try {
       const response = await invoke<string>("chat_with_cat", { message: msg });
       // AI 응답: 윈도우 넓히고, 클릭할 때까지 유지
@@ -673,7 +674,7 @@ export function Cat() {
       setIsAiBubble(true);
     } catch (e) {
       console.error("chat_with_cat error:", e);
-      showBubble("mrrp... can't think right now~", 3000);
+      showBubble("can't think right now... 😿", 3000);
     } finally {
       setChatLoading(false);
     }
