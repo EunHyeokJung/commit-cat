@@ -39,7 +39,6 @@ fn check_fullscreen_macos() -> bool {
 #[cfg(target_os = "windows")]
 fn check_fullscreen_windows() -> bool {
     use std::process::Stdio;
-    // PowerShell로 포그라운드 윈도우 크기 vs 스크린 크기 비교
     let output = std::process::Command::new("powershell")
         .args(["-NoProfile", "-Command",
             "Add-Type -AssemblyName System.Windows.Forms; \

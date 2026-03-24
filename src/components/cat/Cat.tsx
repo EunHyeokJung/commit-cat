@@ -429,8 +429,8 @@ export function Cat() {
     } catch (_) {}
   }, []);
 
-  // macOS Dock 높이(약 70px) 고려하여 y 제한
-  const maxY = useRef(window.screen.height - 150 - 70);
+  // 태스크바/Dock 높이 고려하여 y 제한
+  const maxY = useRef(window.screen.availHeight - 150);
 
   useEffect(() => {
     (async () => {
