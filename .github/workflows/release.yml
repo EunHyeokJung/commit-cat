@@ -47,8 +47,14 @@ jobs:
             ## CommitCat ${{ github.ref_name }}
 
             ### Download
-            - **macOS (Apple Silicon)**: `CommitCat.dmg`
-            - **Windows**: `CommitCat-Setup.exe`
+
+            | 플랫폼 | 파일 | 설명 |
+            |--------|------|------|
+            | 🍎 macOS (Apple Silicon) | `.dmg` | Mac 설치 파일 (M1/M2/M3/M4) |
+            | 🪟 Windows | `.exe` (setup) | Windows 설치 파일 (권장) |
+            | 🪟 Windows | `.msi` | Windows MSI 설치 파일 |
+
+            > ⚠️ 현재 Intel Mac은 지원하지 않습니다.
 
             ### What's new
             See [CHANGELOG](https://github.com/eunseo9311/commit-cat/commits/main) for details.
