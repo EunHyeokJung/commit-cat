@@ -1,7 +1,22 @@
 use serde::Serialize;
 use std::path::PathBuf;
+use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
+
+/// 콘솔 창이 뜨지 않는 Command 생성
+fn silent_command(program: &str) -> Command {
+    let mut cmd = Command::new(program);
+    cmd.stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+    cmd
+}
 
 /// 프론트엔드로 보내는 활동 상태
 #[derive(Debug, Clone, Serialize)]
@@ -96,7 +111,7 @@ fn detect_running_ide() -> Option<String> {
 #[cfg(target_os = "macos")]
 fn detect_running_ide_macos() -> Option<String> {
     // ps -A -o args= 로 전체 커맨드라인을 가져옴
-    let output = std::process::Command::new("ps")
+    let output = silent_command("ps")
         .args(["-A", "-o", "args="])
         .output()
         .ok()?;
@@ -142,7 +157,7 @@ fn detect_running_ide_macos() -> Option<String> {
 // ═══════════════════════════════════════
 #[cfg(target_os = "windows")]
 fn detect_running_ide_windows() -> Option<String> {
-    let output = std::process::Command::new("tasklist")
+    let output = silent_command("tasklist")
         .args(["/FO", "CSV", "/NH"])
         .output()
         .ok()?;
@@ -177,7 +192,7 @@ fn detect_running_ide_windows() -> Option<String> {
 // ═══════════════════════════════════════
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
 fn detect_running_ide_unix() -> Option<String> {
-    let output = std::process::Command::new("ps")
+    let output = silent_command("ps")
         .args(["-A", "-o", "args="])
         .output()
         .ok()?;
@@ -231,7 +246,7 @@ fn get_ide_pids() -> Vec<u32> {
 
 #[cfg(target_os = "macos")]
 fn get_ide_pids_macos() -> Vec<u32> {
-    let output = match std::process::Command::new("ps")
+    let output = match silent_command("ps")
         .args(["-A", "-o", "pid=,args="])
         .output()
     {
@@ -262,7 +277,7 @@ fn get_ide_pids_macos() -> Vec<u32> {
 
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
 fn get_ide_pids_linux() -> Vec<u32> {
-    let output = match std::process::Command::new("ps")
+    let output = match silent_command("ps")
         .args(["-A", "-o", "pid=,args="])
         .output()
     {
@@ -291,7 +306,7 @@ fn get_ide_pids_linux() -> Vec<u32> {
 fn get_process_cwd(pid: u32) -> Option<PathBuf> {
     #[cfg(target_os = "macos")]
     {
-        let output = std::process::Command::new("lsof")
+        let output = silent_command("lsof")
             .args(["-p", &pid.to_string(), "-d", "cwd", "-Fn"])
             .output()
             .ok()?;

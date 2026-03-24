@@ -1,7 +1,22 @@
 use tauri::{AppHandle, Emitter};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::process::{Command, Stdio};
 use std::time::Duration;
+
+/// 콘솔 창이 뜨지 않는 Command 생성
+fn silent_command(program: &str) -> Command {
+    let mut cmd = Command::new(program);
+    cmd.stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+    cmd
+}
 
 /// Git HEAD 변경 + push 감지 (폴링 방식 - MVP)
 pub async fn start_watcher(app: AppHandle) {
@@ -97,7 +112,7 @@ fn read_head(repo_path: &PathBuf) -> Option<String> {
 
 /// 오늘 커밋 수 계산
 pub fn count_today_commits(repo_path: &PathBuf) -> u32 {
-    let output = std::process::Command::new("git")
+    let output = silent_command("git")
         .current_dir(repo_path)
         .args(["rev-list", "--count", "--since=midnight", "HEAD"])
         .output();
