@@ -1,8 +1,13 @@
 use crate::models::settings::AppData;
 use std::path::PathBuf;
+use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
 
 const DATA_FILE: &str = "commit-cat-data.json";
+const BACKUP_FILE: &str = "commit-cat-data.backup.json";
+
+/// 파일 쓰기 동시 접근 방지
+static SAVE_LOCK: Mutex<()> = Mutex::new(());
 
 /// 앱 데이터 디렉토리 경로
 fn data_dir(app: &AppHandle) -> Result<PathBuf, String> {
@@ -32,22 +37,56 @@ pub fn init(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// 데이터 로드
+/// 데이터 로드 (파싱 실패 시 백업에서 복구)
 pub fn load(app: &AppHandle) -> Result<AppData, String> {
     let path = data_path(app)?;
     let content = std::fs::read_to_string(&path)
         .map_err(|e| format!("Failed to read data: {}", e))?;
-    serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse data: {}", e))
+
+    match serde_json::from_str(&content) {
+        Ok(data) => Ok(data),
+        Err(e) => {
+            // 메인 파일 파싱 실패 → 백업에서 복구 시도
+            let backup_path = data_dir(app)?.join(BACKUP_FILE);
+            if backup_path.exists() {
+                let backup_content = std::fs::read_to_string(&backup_path)
+                    .map_err(|e| format!("Failed to read backup: {}", e))?;
+                let data: AppData = serde_json::from_str(&backup_content)
+                    .map_err(|_| format!("Both data and backup corrupted: {}", e))?;
+                // 백업으로 메인 파일 복구
+                let _ = std::fs::copy(&backup_path, &path);
+                Ok(data)
+            } else {
+                Err(format!("Failed to parse data: {}", e))
+            }
+        }
+    }
 }
 
-/// 데이터 저장
+/// 데이터 저장 (atomic write + 백업)
 pub fn save(app: &AppHandle, data: &AppData) -> Result<(), String> {
-    let path = data_path(app)?;
+    let _lock = SAVE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+
+    let dir = data_dir(app)?;
+    let path = dir.join(DATA_FILE);
+    let backup_path = dir.join(BACKUP_FILE);
+    let tmp_path = dir.join("commit-cat-data.tmp.json");
+
     let json = serde_json::to_string_pretty(data)
         .map_err(|e| format!("Failed to serialize: {}", e))?;
-    std::fs::write(&path, json)
-        .map_err(|e| format!("Failed to write: {}", e))
+
+    // 1. 현재 파일을 백업
+    if path.exists() {
+        let _ = std::fs::copy(&path, &backup_path);
+    }
+
+    // 2. 임시 파일에 쓰기
+    std::fs::write(&tmp_path, &json)
+        .map_err(|e| format!("Failed to write temp: {}", e))?;
+
+    // 3. 임시 파일 → 메인 파일로 rename (atomic)
+    std::fs::rename(&tmp_path, &path)
+        .map_err(|e| format!("Failed to rename: {}", e))
 }
 
 /// History 관리: 90일 초과 데이터 정리
