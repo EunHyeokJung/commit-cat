@@ -171,13 +171,16 @@ export function Cat() {
   const appWindow = useRef(getCurrentWindow());
 
   // 투명 영역 클릭 통과 (드래그 중에는 비활성화)
+  const ignoreRef = useRef(false);
   useEffect(() => {
     const win = appWindow.current;
-    const onMove = async (e: MouseEvent) => {
+    const onMove = (e: MouseEvent) => {
       if (isDraggingRef.current) return;
-      const el = e.target as HTMLElement;
-      const isInteractive = el.closest(".cat, .cat-context-menu, .cat-chat, .bubble");
-      await win.setIgnoreCursorEvents(!isInteractive, { forward: true });
+      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      const shouldIgnore = !el?.closest(".cat, .cat-context-menu, .cat-chat, .bubble");
+      if (shouldIgnore === ignoreRef.current) return;
+      ignoreRef.current = shouldIgnore;
+      win.setIgnoreCursorEvents(shouldIgnore, { forward: true }).catch(() => {});
     };
     document.addEventListener("mousemove", onMove);
     return () => document.removeEventListener("mousemove", onMove);
@@ -574,10 +577,11 @@ export function Cat() {
   // ══════════════════════════════════════
   // 드래그
   // ══════════════════════════════════════
-  const handleMouseDown = useCallback(async (e: React.MouseEvent) => {
-    setIsDragging(true);
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
     isDraggingRef.current = true;
-    await appWindow.current.setIgnoreCursorEvents(false);
+    ignoreRef.current = false;
+    setIsDragging(true);
+    appWindow.current.setIgnoreCursorEvents(false).catch(() => {});
     didDrag.current = false;
     dragStartMouse.current = { x: e.screenX, y: e.screenY };
     dragStartWin.current = { ...winPosRef.current };
