@@ -176,8 +176,10 @@ export function Cat() {
   useEffect(() => {
     const win = appWindow.current;
     const PAD = 30;
+    const IGNORE_DELAY = 200;
     let busy = false;
     let queued: boolean | null = null;
+    let ignoreTimer: ReturnType<typeof setTimeout> | null = null;
 
     const applyIgnore = async (ignore: boolean) => {
       if (busy) { queued = ignore; return; }
@@ -211,8 +213,22 @@ export function Cat() {
       }
       const shouldIgnore = !hit;
       if (shouldIgnore === ignoreRef.current) return;
-      ignoreRef.current = shouldIgnore;
-      applyIgnore(shouldIgnore);
+
+      if (shouldIgnore) {
+        // 투명 영역 진입: 딜레이 후 클릭 통과 활성화
+        if (!ignoreTimer) {
+          ignoreTimer = setTimeout(() => {
+            ignoreTimer = null;
+            ignoreRef.current = true;
+            applyIgnore(true);
+          }, IGNORE_DELAY);
+        }
+      } else {
+        // 고양이 영역 진입: 즉시 클릭 통과 해제
+        if (ignoreTimer) { clearTimeout(ignoreTimer); ignoreTimer = null; }
+        ignoreRef.current = false;
+        applyIgnore(false);
+      }
     };
     document.addEventListener("mousemove", onMove);
     return () => document.removeEventListener("mousemove", onMove);
