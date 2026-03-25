@@ -172,12 +172,29 @@ export function Cat() {
 
   // 투명 영역 클릭 통과 (드래그 중에는 비활성화)
   const ignoreRef = useRef(false);
+  const catRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const win = appWindow.current;
+    const PAD = 15;
     const onMove = (e: MouseEvent) => {
       if (isDraggingRef.current) return;
-      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
-      const shouldIgnore = !el?.closest(".cat, .cat-context-menu, .cat-chat, .bubble");
+      const { clientX: mx, clientY: my } = e;
+      let hit = false;
+      // 고양이 영역 (패딩 포함)
+      if (catRef.current) {
+        const r = catRef.current.getBoundingClientRect();
+        if (mx >= r.left - PAD && mx <= r.right + PAD && my >= r.top - PAD && my <= r.bottom + PAD) {
+          hit = true;
+        }
+      }
+      // 메뉴, 채팅, 말풍선 등 다른 interactive 요소
+      if (!hit) {
+        const el = document.elementFromPoint(mx, my) as HTMLElement | null;
+        if (el?.closest(".cat-context-menu, .cat-chat, .cat__bubble, .cat-timer")) {
+          hit = true;
+        }
+      }
+      const shouldIgnore = !hit;
       if (shouldIgnore === ignoreRef.current) return;
       ignoreRef.current = shouldIgnore;
       win.setIgnoreCursorEvents(shouldIgnore, { forward: true }).catch(() => {});
@@ -746,6 +763,7 @@ export function Cat() {
         )}
       </div>
       <div
+        ref={catRef}
         className={`cat ${isDragging ? "cat--dragging" : ""} ${catState !== "idle" ? `cat--${catState}` : ""}`}
         onMouseDown={handleMouseDown}
         onClick={handleClick}
