@@ -23,7 +23,7 @@ async function notify(title: string, body: string) {
 }
 
 const WIN_W = 200;
-const WIN_W_EXPANDED = 320;
+const WIN_W_EXPANDED = 350;
 
 const normalMessages = ["hey there~ 😺", "what's up? 🐾", "hi hi~ 💛", "oh, hello! 😸", "noticed me? 👀"];
 const happyMessages = ["that feels nice~ 💛", "more more! 😻", "you're the best 🥰", "hehe~ 😸"];
@@ -175,19 +175,34 @@ export function Cat() {
   const catRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const win = appWindow.current;
-    const PAD = 15;
+    const PAD = 30;
+    let busy = false;
+    let queued: boolean | null = null;
+
+    const applyIgnore = async (ignore: boolean) => {
+      if (busy) { queued = ignore; return; }
+      busy = true;
+      try {
+        await win.setIgnoreCursorEvents(ignore, { forward: true });
+      } catch (_) {}
+      busy = false;
+      if (queued !== null) {
+        const next = queued;
+        queued = null;
+        applyIgnore(next);
+      }
+    };
+
     const onMove = (e: MouseEvent) => {
       if (isDraggingRef.current) return;
       const { clientX: mx, clientY: my } = e;
       let hit = false;
-      // 고양이 영역 (패딩 포함)
       if (catRef.current) {
         const r = catRef.current.getBoundingClientRect();
         if (mx >= r.left - PAD && mx <= r.right + PAD && my >= r.top - PAD && my <= r.bottom + PAD) {
           hit = true;
         }
       }
-      // 메뉴, 채팅, 말풍선 등 다른 interactive 요소
       if (!hit) {
         const el = document.elementFromPoint(mx, my) as HTMLElement | null;
         if (el?.closest(".cat-context-menu, .cat-chat, .cat__bubble, .cat-timer")) {
@@ -197,7 +212,7 @@ export function Cat() {
       const shouldIgnore = !hit;
       if (shouldIgnore === ignoreRef.current) return;
       ignoreRef.current = shouldIgnore;
-      win.setIgnoreCursorEvents(shouldIgnore, { forward: true }).catch(() => {});
+      applyIgnore(shouldIgnore);
     };
     document.addEventListener("mousemove", onMove);
     return () => document.removeEventListener("mousemove", onMove);
@@ -263,14 +278,30 @@ export function Cat() {
 
   const handleContextMenu = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
+    const pos = await appWindow.current.outerPosition();
+    const scale = await appWindow.current.scaleFactor();
+    const shift = (WIN_W_EXPANDED - WIN_W) / 2;
     await appWindow.current.setSize(new LogicalSize(WIN_W_EXPANDED, 150));
-    setContextMenu({ x: 160, y: 30 });
+    await appWindow.current.setPosition(new LogicalPosition(
+      Math.round(pos.x / scale - shift),
+      Math.round(pos.y / scale)
+    ));
+    setContextMenu({ x: 235, y: 20 });
   }, []);
 
   // 외부 클릭 시 메뉴 닫기
-  const closeContextMenu = useCallback(() => {
+  const closeContextMenu = useCallback(async () => {
     setContextMenu(null);
-    appWindow.current.setSize(new LogicalSize(WIN_W, 150)).catch(() => {});
+    try {
+      const pos = await appWindow.current.outerPosition();
+      const scale = await appWindow.current.scaleFactor();
+      const shift = (WIN_W_EXPANDED - WIN_W) / 2;
+      await appWindow.current.setSize(new LogicalSize(WIN_W, 150));
+      await appWindow.current.setPosition(new LogicalPosition(
+        Math.round(pos.x / scale + shift),
+        Math.round(pos.y / scale)
+      ));
+    } catch (_) {}
   }, []);
 
   useEffect(() => {
@@ -439,13 +470,10 @@ export function Cat() {
     return () => clearInterval(id);
   }, [behavior]);
 
-  // sit/sit2 이미지가 있는 색상
-  const hasSit = catColor === "brown" || catColor === "orange";
-
   // 이미지 경로 결정
   const getImageSrc = () => {
-    if (behavior === "sleep") return hasSit ? `/assets/cat/${catColor}_sit2.png` : `/assets/cat/${catColor}_stand.png`;
-    if (behavior === "sit") return hasSit ? `/assets/cat/${catColor}_sit.png` : `/assets/cat/${catColor}_stand.png`;
+    if (behavior === "sleep") return `/assets/cat/${catColor}_sit2.png`;
+    if (behavior === "sit") return `/assets/cat/${catColor}_sit.png`;
     if (behavior === "stand") return `/assets/cat/${catColor}_stand.png`;
     return frame === 0
       ? `/assets/cat/${catColor}_stand.png`
@@ -781,7 +809,7 @@ export function Cat() {
             draggable={false}
           />
         </div>
-        {(behavior === "sleep" || catState === "sleeping") && hasSit && <div className="cat__zzz" style={direction === "right" ? { left: "auto", right: "5px" } : undefined}>z z z</div>}
+        {(behavior === "sleep" || catState === "sleeping") && <div className="cat__zzz" style={direction === "right" ? { left: "auto", right: "5px" } : undefined}>z z z</div>}
         {showLevelUp && (
           <div className={`cat__level-particles cat__level-particles--${catColor}`}>
             {Array.from({ length: 8 }, (_, i) => (

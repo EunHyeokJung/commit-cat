@@ -69,6 +69,11 @@
   height: calc(72px * 1.1);
 }
 
+.cat__image--white.cat__image--sit,
+.cat__image--white.cat__image--sleep {
+  height: calc(72px * 0.88);
+}
+
 .cat__image--orange {
   height: calc(72px * 1.1);
 }
