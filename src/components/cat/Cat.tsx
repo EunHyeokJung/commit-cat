@@ -170,6 +170,18 @@ export function Cat() {
   })));
   const appWindow = useRef(getCurrentWindow());
 
+  // 투명 영역 클릭 통과
+  useEffect(() => {
+    const win = appWindow.current;
+    const onMove = async (e: MouseEvent) => {
+      const el = e.target as HTMLElement;
+      const isInteractive = el.closest(".cat, .cat-context-menu, .cat-chat, .bubble");
+      await win.setIgnoreCursorEvents(!isInteractive, { forward: true });
+    };
+    document.addEventListener("mousemove", onMove);
+    return () => document.removeEventListener("mousemove", onMove);
+  }, []);
+
   // 트레이 메뉴에서 고양이 색상 변경 이벤트 수신
   useEffect(() => {
     const unlisten = listen<string>("change-cat-color", (event) => {
