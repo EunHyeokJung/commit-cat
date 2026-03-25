@@ -27,6 +27,7 @@ const WIN_W_EXPANDED = 350;
 
 const normalMessages = ["hey there~ 😺", "what's up? 🐾", "hi hi~ 💛", "oh, hello! 😸", "noticed me? 👀"];
 const happyMessages = ["that feels nice~ 💛", "more more! 😻", "you're the best 🥰", "hehe~ 😸"];
+const loveMessages = ["I love you so much~ 💕", "you're my favorite human 💗", "never stop... 🥺💛", "purrrrrr~ 💞"];
 const annoyedMessages = ["okay I get it 😑", "a bit much... 🙄", "I was napping! 😾", "not now please 😤"];
 const codingMessages = [
   "you're on a roll today 🔥", "ooh that's clean code 👀",
@@ -259,6 +260,14 @@ export function Cat() {
   const clickResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const singleClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── Petting (우클릭 + 좌우 스와이프) ──
+  const isPettingRef = useRef(false);
+  const petLastX = useRef(0);
+  const petScore = useRef(0);
+  const petTier = useRef(0);           // 0=none, 1=mild, 2=happy, 3=love
+  const petLastDirection = useRef<"left" | "right" | null>(null);
+  const petLastChangeTime = useRef(0);
+
   // ── AI 채팅 ──
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
@@ -326,6 +335,13 @@ export function Cat() {
     window.addEventListener("mousedown", handleClick);
     return () => window.removeEventListener("mousedown", handleClick);
   }, [contextMenu, closeContextMenu]);
+
+  // 브라우저 기본 컨텍스트 메뉴 방지
+  useEffect(() => {
+    const prevent = (e: MouseEvent) => e.preventDefault();
+    document.addEventListener("contextmenu", prevent);
+    return () => document.removeEventListener("contextmenu", prevent);
+  }, []);
 
   // 메뉴가 윈도우 밖으로 넘어가면 위로 올리기
   useEffect(() => {
@@ -639,6 +655,17 @@ export function Cat() {
   // 드래그
   // ══════════════════════════════════════
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button === 2) {
+      // 우클릭: petting 추적 시작
+      isPettingRef.current = true;
+      petLastX.current = e.screenX;
+      petScore.current = 0;
+      petTier.current = 0;
+      petLastDirection.current = null;
+      petLastChangeTime.current = 0;
+      return;
+    }
+    if (e.button !== 0) return;
     isDraggingRef.current = true;
     ignoreRef.current = false;
     setIsDragging(true);
@@ -668,6 +695,56 @@ export function Cat() {
       window.removeEventListener("mouseup", handleUp);
     };
   }, [isDragging, moveWindow, showBubble]);
+
+  // ══════════════════════════════════════
+  // Petting (우클릭 + 좌우 스와이프)
+  // ══════════════════════════════════════
+  useEffect(() => {
+    const SPEED_THRESHOLD = 200; // ms — 이보다 빠르면 보너스
+
+    const handlePetMove = (e: MouseEvent) => {
+      if (!isPettingRef.current) return;
+      const dx = e.screenX - petLastX.current;
+      if (Math.abs(dx) < 5) return; // jitter 무시
+      const dir = dx > 0 ? "right" : "left";
+      if (petLastDirection.current && dir !== petLastDirection.current) {
+        const now = Date.now();
+        const fast = petLastChangeTime.current > 0 && (now - petLastChangeTime.current) < SPEED_THRESHOLD;
+        petScore.current += fast ? 2 : 1;
+        petLastChangeTime.current = now;
+
+        // 티어별 말풍선 (각 티어는 한 번만 발동)
+        const score = petScore.current;
+        if (score >= 10 && petTier.current < 3) {
+          petTier.current = 3;
+          showBubble(loveMessages[Math.floor(Math.random() * loveMessages.length)], 3000);
+        } else if (score >= 6 && petTier.current < 2) {
+          petTier.current = 2;
+          showBubble(happyMessages[Math.floor(Math.random() * happyMessages.length)], 2500);
+        } else if (score >= 3 && petTier.current < 1) {
+          petTier.current = 1;
+          showBubble(normalMessages[Math.floor(Math.random() * normalMessages.length)], 2000);
+        }
+      }
+      petLastDirection.current = dir;
+      petLastX.current = e.screenX;
+    };
+    const handlePetUp = (e: MouseEvent) => {
+      if (e.button !== 2) return;
+      if (!isPettingRef.current) return;
+      isPettingRef.current = false;
+      if (petTier.current === 0) {
+        // 쓰담 아님 → 기존 컨텍스트 메뉴 호출
+        handleContextMenu(e as unknown as React.MouseEvent);
+      }
+    };
+    window.addEventListener("mousemove", handlePetMove);
+    window.addEventListener("mouseup", handlePetUp);
+    return () => {
+      window.removeEventListener("mousemove", handlePetMove);
+      window.removeEventListener("mouseup", handlePetUp);
+    };
+  }, [showBubble, handleContextMenu]);
 
   // ══════════════════════════════════════
   // 클릭
@@ -812,7 +889,6 @@ export function Cat() {
         onMouseDown={handleMouseDown}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
-        onContextMenu={handleContextMenu}
       >
         <div
           className="cat__sprite"
