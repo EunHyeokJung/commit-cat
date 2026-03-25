@@ -5,6 +5,10 @@
   "version": "0.1.0",
   "publisher": "commitcat",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eunseo9311/commit-cat"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
