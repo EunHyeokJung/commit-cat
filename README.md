@@ -102,6 +102,13 @@ Download from the [Releases page](https://github.com/eunseo9311/commit-cat/relea
 CommitCat.dmg
 ```
 
+> **macOS Gatekeeper 경고 시:**
+> 앱이 코드사인되지 않아 "손상되었기 때문에 열 수 없습니다" 경고가 나올 수 있습니다.
+> 터미널에서 아래 명령어를 실행하면 해결됩니다:
+> ```
+> xattr -cr /Applications/Commit\ Cat.app
+> ```
+
 **Windows**
 ```
 CommitCat-Setup.exe
