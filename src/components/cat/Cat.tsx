@@ -170,10 +170,11 @@ export function Cat() {
   })));
   const appWindow = useRef(getCurrentWindow());
 
-  // 투명 영역 클릭 통과
+  // 투명 영역 클릭 통과 (드래그 중에는 비활성화)
   useEffect(() => {
     const win = appWindow.current;
     const onMove = async (e: MouseEvent) => {
+      if (isDraggingRef.current) return;
       const el = e.target as HTMLElement;
       const isInteractive = el.closest(".cat, .cat-context-menu, .cat-chat, .bubble");
       await win.setIgnoreCursorEvents(!isInteractive, { forward: true });
@@ -193,6 +194,7 @@ export function Cat() {
   const winPosRef = useRef({ x: 300, y: 200 });
   const [direction, setDirection] = useState<"left" | "right">("right");
   const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
   const didDrag = useRef(false);
   const dragStartMouse = useRef({ x: 0, y: 0 });
   const dragStartWin = useRef({ x: 0, y: 0 });
@@ -572,8 +574,10 @@ export function Cat() {
   // ══════════════════════════════════════
   // 드래그
   // ══════════════════════════════════════
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleMouseDown = useCallback(async (e: React.MouseEvent) => {
     setIsDragging(true);
+    isDraggingRef.current = true;
+    await appWindow.current.setIgnoreCursorEvents(false);
     didDrag.current = false;
     dragStartMouse.current = { x: e.screenX, y: e.screenY };
     dragStartWin.current = { ...winPosRef.current };
@@ -589,6 +593,7 @@ export function Cat() {
     };
     const handleUp = () => {
       setIsDragging(false);
+      isDraggingRef.current = false;
       if (didDrag.current) showBubble("wheee~! 🎢", 1500);
     };
     window.addEventListener("mousemove", handleMove);
