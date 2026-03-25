@@ -1,0 +1,37 @@
+<idea-plugin>
+    <id>com.commitcat.plugin</id>
+    <name>CommitCat</name>
+    <vendor url="https://github.com/eunseo9311/commit-cat">CommitCat</vendor>
+
+    <description><![CDATA[
+    Connect your JetBrains IDE to the CommitCat desktop pet.<br/>
+    Tracks coding time, file changes, saves, and builds automatically.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <statusBarWidgetFactory
+            id="CommitCatWidget"
+            implementation="com.commitcat.plugin.widget.CommitCatWidgetFactory"
+            order="after encodingWidget"/>
+    </extensions>
+
+    <applicationListeners>
+        <listener
+            class="com.commitcat.plugin.listeners.CommitCatActivationListener"
+            topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+        <listener
+            class="com.commitcat.plugin.listeners.CommitCatDocumentSaveListener"
+            topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+    </applicationListeners>
+
+    <projectListeners>
+        <listener
+            class="com.commitcat.plugin.listeners.CommitCatFileEditorListener"
+            topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+        <listener
+            class="com.commitcat.plugin.listeners.CommitCatExecutionListener"
+            topic="com.intellij.execution.ExecutionListener"/>
+    </projectListeners>
+</idea-plugin>
