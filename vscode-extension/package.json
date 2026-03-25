@@ -2,9 +2,10 @@
   "name": "commitcat",
   "displayName": "CommitCat",
   "description": "Connect VS Code to your CommitCat desktop pet",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "commitcat",
   "license": "MIT",
+  "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/eunseo9311/commit-cat"
