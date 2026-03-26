@@ -16,9 +16,11 @@ CommitCat lives on your desktop, watches your development environment locally, a
 - 🐾 Desktop pet with pixel-art sprites — walks, sits, sleeps, and celebrates
 - 👣 Menu bar / system tray companion (streak tooltip)
 - 🖱️ Draggable — place it anywhere on your screen
+- 🖱️ Click-through — transparent areas pass clicks to the desktop
 - 💬 Click to chat (speech bubble reactions with personality)
 - 💬 Random coding messages — cat reacts while you code
 - 🎨 Multi-color cat (orange / brown / white)
+- 🐾 Petting — right-click & swipe to pet the cat with tiered reactions
 - 💤 Sleeps when you're away
 - 🖥️ Fullscreen-aware — auto-hides when you go fullscreen
 
@@ -37,8 +39,13 @@ CommitCat lives on your desktop, watches your development environment locally, a
 ### Integrations
 - 🐙 GitHub integration — PR open/merge XP, star notifications
 - 🤖 Claude AI chat — double-click the cat to chat with your AI companion (Anthropic API)
+- 🧩 VSCode Extension — install from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=commitcat.commitcat) for seamless IDE detection
 - 🔔 macOS Notification Center — system notifications for key events
 - 🔄 Auto-update checker — notifies when a new version is available
+
+### IDE Plugins
+- 📦 [VS Code Extension](https://marketplace.visualstudio.com/items?itemName=commitcat.commitcat) — coding time, file saves, build tracking
+- 📦 JetBrains Plugin (IntelliJ, WebStorm, PyCharm, GoLand, CLion, RustRover) — coding time, file saves, build tracking
 
 ### Settings
 - ⚙️ Settings panel — manage watched repos, cat color, timer durations, API keys, and XP progress
@@ -120,6 +127,18 @@ CommitCat.AppImage   # Most distros
 CommitCat.deb        # Debian/Ubuntu
 ```
 
+> **Wayland (Hyprland, Sway 등) 사용 시 EGL 에러가 발생하면:**
+> ```
+> WEBKIT_DISABLE_DMABUF_RENDERER=1 commit-cat
+> ```
+> 또는 X11 백엔드를 사용하세요:
+> ```
+> GDK_BACKEND=x11 commit-cat
+> ```
+
+### VSCode Extension
+Search **"CommitCat"** in the VSCode Extensions tab, or install directly from the [Marketplace](https://marketplace.visualstudio.com/items?itemName=commitcat.commitcat).
+
 ### Build from source
 
 ```bash
@@ -163,7 +182,9 @@ npm run tauri dev
 **Next**
 - [x] Linux support
 - [x] Docker integration
-- [ ] IDE plugins
+- [x] IDE plugins (VS Code Extension, JetBrains Plugin)
+- [x] Petting interaction
+- [x] Click-through transparent areas
 - [ ] Custom skins
 - [ ] Cloud sync (optional)
 
