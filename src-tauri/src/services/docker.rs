@@ -1,5 +1,5 @@
-use crate::models::activity::ActivityEvent;
-use crate::models::growth::exp_for_level;
+use commit_cat_core::models::activity::ActivityEvent;
+use commit_cat_core::models::growth::exp_for_level;
 use crate::services::storage;
 use chrono::Local;
 use std::collections::HashSet;

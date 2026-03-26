@@ -1,4 +1,4 @@
-use crate::models::settings::AppData;
+use commit_cat_core::models::settings::AppData;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager};

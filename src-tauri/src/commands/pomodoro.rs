@@ -1,4 +1,4 @@
-use crate::models::activity::PomodoroStatus;
+use commit_cat_core::models::activity::PomodoroStatus;
 
 #[tauri::command]
 pub async fn start_pomodoro() -> Result<PomodoroStatus, String> {

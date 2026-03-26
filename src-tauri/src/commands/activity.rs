@@ -1,4 +1,4 @@
-use crate::models::activity::{ActivityEvent, CodingStatus, DailySummary};
+use commit_cat_core::models::activity::{ActivityEvent, CodingStatus, DailySummary};
 use crate::services::storage;
 use tauri::AppHandle;
 

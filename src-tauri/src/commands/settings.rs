@@ -1,4 +1,4 @@
-use crate::models::settings::AppSettings;
+use commit_cat_core::models::settings::AppSettings;
 use crate::services;
 
 #[tauri::command]

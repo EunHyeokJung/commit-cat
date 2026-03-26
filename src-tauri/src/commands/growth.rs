@@ -1,4 +1,4 @@
-use crate::models::growth::LevelInfo;
+use commit_cat_core::models::growth::LevelInfo;
 
 #[tauri::command]
 pub async fn get_level_info() -> Result<LevelInfo, String> {

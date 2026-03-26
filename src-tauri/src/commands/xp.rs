@@ -1,5 +1,5 @@
-use crate::models::activity::ActivityEvent;
-use crate::models::growth::{exp_for_level, LevelInfo};
+use commit_cat_core::models::activity::ActivityEvent;
+use commit_cat_core::models::growth::{exp_for_level, LevelInfo};
 use crate::services::storage;
 use chrono::Local;
 use serde::Serialize;

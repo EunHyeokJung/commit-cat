@@ -1,4 +1,4 @@
-use crate::models::cat::CatState;
+use commit_cat_core::models::cat::CatState;
 use chrono::Local;
 
 /// 상태 전환 조건 (초 단위 기준값)
