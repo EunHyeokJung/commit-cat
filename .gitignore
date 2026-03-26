@@ -151,3 +151,4 @@ src-tauri/WixTools/
 # OS
 .DS_Store
 Thumbs.db
+target/
