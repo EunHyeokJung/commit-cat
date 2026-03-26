@@ -10,8 +10,21 @@ type CatState =
   | "interaction";
 
 type CatMood = "happy" | "sad" | "sleeping" | "focused" | "excited";
-type CatColor = "white" | "brown" | "orange";
+export type CatColor = "white" | "brown" | "orange";
 export type CatEmotion = null | "surprised" | "excited" | "proud" | "bored" | "angry";
+
+export interface SubCat {
+  id: string;
+  color: CatColor;
+}
+
+const ALL_COLORS: CatColor[] = ["white", "brown", "orange"];
+
+export function getMaxCats(level: number): number {
+  if (level < 10) return 1;
+  if (level < 30) return 2;
+  return 3;
+}
 
 interface CatStore {
   // State
@@ -48,10 +61,14 @@ interface CatStore {
   breakActive: boolean;
   breakSeconds: number;
 
+  // Sub cats
+  subCats: SubCat[];
+
   // Actions
   setState: (state: string) => void;
   setLevel: (level: number, exp: number, expToNext: number) => void;
   setCatColor: (color: CatColor) => void;
+  syncSubCats: () => void;
   setActiveIde: (ide: string | null) => void;
   setIdleSeconds: (seconds: number) => void;
   addCommit: () => void;
@@ -98,6 +115,8 @@ export const useCatStore = create<CatStore>((set) => ({
   streakDays: 0,
   catColor: "brown",
 
+  subCats: [],
+
   emotion: null,
   recentCommitCount: 0,
   recentBuildFailCount: 0,
@@ -130,6 +149,23 @@ export const useCatStore = create<CatStore>((set) => ({
 
   setCatColor: (color) =>
     set({ catColor: color }),
+
+  syncSubCats: () =>
+    set((s) => {
+      const maxSubs = getMaxCats(s.level) - 1; // minus main cat
+      if (maxSubs <= 0) return { subCats: [] };
+      const available = ALL_COLORS.filter((c) => c !== s.catColor);
+      const newSubs: SubCat[] = [];
+      if (maxSubs >= 1) {
+        const idx = Math.floor(Math.random() * available.length);
+        newSubs.push({ id: "cat-sub-1", color: available[idx] });
+      }
+      if (maxSubs >= 2) {
+        const remaining = available.filter((c) => c !== newSubs[0].color);
+        newSubs.push({ id: "cat-sub-2", color: remaining[0] });
+      }
+      return { subCats: newSubs };
+    }),
 
   setActiveIde: (ide) =>
     set({ activeIde: ide }),

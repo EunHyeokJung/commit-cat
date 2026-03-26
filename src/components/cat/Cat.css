@@ -595,7 +595,7 @@
 /* angry — 빨간 tint + 진동 */
 .cat--emotion-angry .cat__image {
   animation: emotion-angry 0.1s linear infinite;
-  filter: sepia(0.3) saturate(2) hue-rotate(-30deg) drop-shadow(0 0 6px rgba(229, 57, 53, 0.4)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  filter: sepia(0.5) saturate(4) hue-rotate(-40deg) brightness(0.95) drop-shadow(0 0 8px rgba(229, 57, 53, 0.6)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 }
 @keyframes emotion-angry {
   0% { transform: translate(0, 0); }

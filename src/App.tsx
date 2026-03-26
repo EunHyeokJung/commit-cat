@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
-import { listen } from "@tauri-apps/api/event";
+import { listen, emit } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { sendNotification, isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import { Cat } from "./components/cat/Cat";
 import { useCatStore } from "./stores/catStore";
@@ -43,7 +44,7 @@ function App() {
   const {
     setState, setActiveIde, setIdleSeconds, addCodingMinute, setLevel, triggerLevelUp,
     setEmotion, clearEmotion, incrementCommitStreak, resetCommitStreak,
-    incrementBuildFails, resetBuildFails,
+    incrementBuildFails, resetBuildFails, syncSubCats,
   } = useCatStore();
 
   // celebrating/interaction 같은 임시 상태의 자동 복귀 타이머
@@ -69,8 +70,10 @@ function App() {
     if (current === "sleeping") return;
     if (emotionTimer.current) clearTimeout(emotionTimer.current);
     setEmotion(emotion);
+    emit("sub-cat:emotion", { emotion, duration }).catch(() => {});
     emotionTimer.current = setTimeout(() => {
       clearEmotion();
+      emit("sub-cat:emotion", { emotion: null, duration: 0 }).catch(() => {});
     }, duration);
   };
 
@@ -102,8 +105,15 @@ function App() {
   useEffect(() => {
     (async () => {
       try {
-        const status = await invoke<XpStatus>("get_xp_status");
+        const [status, settings] = await Promise.all([
+          invoke<XpStatus>("get_xp_status"),
+          invoke<{ subCatsEnabled?: boolean }>("get_settings"),
+        ]);
         setLevel(status.level, status.currentExp, status.expToNext);
+        // 초기 로드 후 서브 고양이 동기화 (설정이 켜져있을 때만)
+        if (settings.subCatsEnabled !== false) {
+          setTimeout(() => useCatStore.getState().syncSubCats(), 0);
+        }
       } catch (e) {
         console.error("Failed to load XP status:", e);
       }
@@ -194,10 +204,12 @@ function App() {
         if (!status.isIdeRunning && status.idleSeconds >= 900) {
           if (currentEmotion !== "bored") {
             setEmotion("bored");
+            emit("sub-cat:emotion", { emotion: "bored", duration: 0 }).catch(() => {});
           }
         } else if (currentEmotion === "bored") {
           // IDE 감지되거나 활동 재개 → bored 해제
           clearEmotion();
+          emit("sub-cat:emotion", { emotion: null, duration: 0 }).catch(() => {});
         }
       }),
 
@@ -331,6 +343,132 @@ function App() {
     };
   }, [setState, setActiveIde, setIdleSeconds, addCodingMinute, setLevel, triggerLevelUp,
       setEmotion, clearEmotion, incrementCommitStreak, resetCommitStreak, incrementBuildFails, resetBuildFails]);
+
+  // 레벨업 시 서브 고양이 동기화
+  useEffect(() => {
+    const unlisten = listen<number>("xp:level-up", async () => {
+      try {
+        const settings = await invoke<{ subCatsEnabled?: boolean }>("get_settings");
+        if (settings.subCatsEnabled !== false) syncSubCats();
+      } catch (_) {}
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, [syncSubCats]);
+
+  // 메인 고양이 색상 변경 시 서브 고양이 재배정
+  useEffect(() => {
+    const unlisten = listen<string>("change-cat-color", () => {
+      // catStore의 setCatColor가 먼저 처리된 후 syncSubCats 실행
+      setTimeout(() => useCatStore.getState().syncSubCats(), 0);
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, []);
+
+  // 서브 고양이 토글 (설정에서 on/off)
+  useEffect(() => {
+    const unlisten = listen<boolean>("sub-cats-toggle", (event) => {
+      if (event.payload) {
+        syncSubCats();
+      } else {
+        // 모든 서브 고양이 제거
+        const subs = useCatStore.getState().subCats;
+        for (const sub of subs) {
+          WebviewWindow.getByLabel(sub.id).then((win) => {
+            if (win) win.close();
+          });
+        }
+        useCatStore.setState({ subCats: [] });
+      }
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, [syncSubCats]);
+
+  // subCats 변경 → WebviewWindow 생성/제거
+  const prevSubCatsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    const unsub = useCatStore.subscribe((state) => {
+      const currentIds = state.subCats.map((s) => s.id);
+      const prevIds = prevSubCatsRef.current;
+
+      // 동일하면 스킵
+      const currentKey = state.subCats.map((s) => `${s.id}:${s.color}`).join(",");
+      const prevKey = prevIds.join(",");
+
+      // ID만 비교해서 같으면 색상 변경인지 확인
+      if (currentKey === prevKey) return;
+
+      // 제거: 이전에 있었지만 현재 없는 윈도우
+      for (const id of prevIds) {
+        if (!currentIds.includes(id.split(":")[0])) {
+          WebviewWindow.getByLabel(id.split(":")[0]).then((win) => {
+            if (win) win.close();
+          });
+        }
+      }
+
+      // 색상이 바뀐 기존 윈도우 닫기 (재생성 위해)
+      for (const sub of state.subCats) {
+        const prev = prevIds.find((p) => p.startsWith(sub.id + ":"));
+        if (prev && prev !== `${sub.id}:${sub.color}`) {
+          WebviewWindow.getByLabel(sub.id).then((win) => {
+            if (win) win.close();
+          });
+        }
+      }
+
+      // 생성: 현재 있지만 이전에 없거나 색상 변경된 윈도우
+      for (const sub of state.subCats) {
+        const prev = prevIds.find((p) => p.startsWith(sub.id + ":"));
+        if (!prev || prev !== `${sub.id}:${sub.color}`) {
+          // 약간의 딜레이로 닫힌 후 생성
+          setTimeout(async () => {
+            const existing = await WebviewWindow.getByLabel(sub.id);
+            if (existing) return;
+            const randomX = 100 + Math.floor(Math.random() * (window.screen.width - 300));
+            const y = window.screen.availHeight - 150;
+            const win = new WebviewWindow(sub.id, {
+              url: `/?cat=sub&color=${sub.color}`,
+              width: 200,
+              height: 150,
+              x: randomX,
+              y,
+              resizable: false,
+              decorations: false,
+              transparent: true,
+              alwaysOnTop: true,
+              skipTaskbar: true,
+              shadow: false,
+              visible: true,
+            });
+            // macOS 투명 설정 적용
+            win.once("tauri://created", () => {
+              invoke("setup_sub_cat_window", { label: sub.id }).catch(() => {});
+            });
+          }, prev ? 300 : 0);
+        }
+      }
+
+      prevSubCatsRef.current = state.subCats.map((s) => `${s.id}:${s.color}`);
+    });
+
+    return () => unsub();
+  }, []);
+
+  // 풀스크린: 서브 고양이도 함께 숨기기/보이기
+  useEffect(() => {
+    const unlisten = listen<boolean>("activity:fullscreen", async (event) => {
+      const subs = useCatStore.getState().subCats;
+      for (const sub of subs) {
+        const win = await WebviewWindow.getByLabel(sub.id);
+        if (win) {
+          if (event.payload) await win.hide();
+          else await win.show();
+        }
+      }
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, []);
 
   return <Cat />;
 }

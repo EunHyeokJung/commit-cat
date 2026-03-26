@@ -13,7 +13,7 @@ use cocoa::appkit::{NSColor, NSWindow};
 use cocoa::base::{id, nil, NO};
 
 #[cfg(target_os = "macos")]
-fn setup_macos_window(window: &tauri::WebviewWindow) {
+pub(crate) fn setup_macos_window(window: &tauri::WebviewWindow) {
     use tauri::Emitter;
 
     if let Ok(ns_window) = window.ns_window() {
@@ -49,6 +49,8 @@ pub fn run() {
             if let Some(window) = app.get_webview_window("cat-overlay") {
                 setup_macos_window(&window);
             }
+
+            // 서브 고양이 윈도우 투명 설정은 setup_sub_cat_window 커맨드로 처리
 
             // ── config 기반 트레이 아이콘 설정 ──
             if let Some(tray) = app.tray_by_id("main-tray") {
@@ -168,6 +170,7 @@ pub fn run() {
             commands::cat::get_cat_state,
             commands::cat::click_cat,
             commands::cat::quit_app,
+            commands::cat::setup_sub_cat_window,
             // Activity
             commands::activity::get_today_summary,
             commands::activity::get_today_events,

@@ -1,5 +1,5 @@
 use crate::models::cat::CatInfo;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 /// 고양이 현재 상태 조회
 #[tauri::command]
@@ -26,5 +26,19 @@ pub async fn click_cat() -> Result<String, String> {
 #[tauri::command]
 pub async fn quit_app(app: AppHandle) -> Result<(), String> {
     app.exit(0);
+    Ok(())
+}
+
+/// 서브 고양이 윈도우 macOS 투명 설정
+#[tauri::command]
+pub async fn setup_sub_cat_window(app: AppHandle, label: String) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        if let Some(window) = app.get_webview_window(&label) {
+            crate::setup_macos_window(&window);
+        }
+    }
+    let _ = &app;
+    let _ = &label;
     Ok(())
 }

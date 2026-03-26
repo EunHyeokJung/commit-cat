@@ -42,6 +42,9 @@ pub struct AppSettings {
     /// Anthropic API key (AI 채팅)
     #[serde(default)]
     pub anthropic_api_key: Option<String>,
+    /// 서브 고양이 표시
+    #[serde(default = "default_true")]
+    pub sub_cats_enabled: bool,
 }
 
 fn default_break_minutes() -> u32 { 5 }
@@ -66,6 +69,7 @@ impl Default for AppSettings {
             github_token: None,
             github_username: None,
             anthropic_api_key: None,
+            sub_cats_enabled: true,
         }
     }
 }
