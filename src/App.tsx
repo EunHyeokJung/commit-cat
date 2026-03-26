@@ -40,10 +40,19 @@ async function notify(title: string, body: string) {
 }
 
 function App() {
-  const { setState, setActiveIde, setIdleSeconds, addCodingMinute, setLevel, triggerLevelUp } = useCatStore();
+  const {
+    setState, setActiveIde, setIdleSeconds, addCodingMinute, setLevel, triggerLevelUp,
+    setEmotion, clearEmotion, incrementCommitStreak, resetCommitStreak,
+    incrementBuildFails, resetBuildFails,
+  } = useCatStore();
 
   // celebrating/interaction 같은 임시 상태의 자동 복귀 타이머
   const tempStateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 감정 자동 해제 타이머
+  const emotionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 커밋 스트릭 리셋 타이머 (5분 내 연속 커밋)
+  const commitStreakTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 코딩 시간 카운터 (1분마다)
   const codingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -53,6 +62,17 @@ function App() {
 
   // 야간 코딩 XP (세션당 1회)
   const lateNightXpGiven = useRef(false);
+
+  // 감정 트리거 헬퍼 (sleeping 상태면 무시)
+  const triggerEmotion = (emotion: "surprised" | "excited" | "proud" | "angry", duration: number) => {
+    const current = useCatStore.getState().state;
+    if (current === "sleeping") return;
+    if (emotionTimer.current) clearTimeout(emotionTimer.current);
+    setEmotion(emotion);
+    emotionTimer.current = setTimeout(() => {
+      clearEmotion();
+    }, duration);
+  };
 
   const startCodingTimer = () => {
     if (!codingTimer.current) {
@@ -158,29 +178,48 @@ function App() {
         const currentIde = useCatStore.getState().activeIde;
 
         if (status.isIdeRunning && !currentIde) {
-          // IDE가 실행 중인데 아직 감지 안됨 → coding
           setActiveIde(status.activeIde);
           if (currentState === "idle") {
             setState("coding");
           }
         } else if (!status.isIdeRunning && currentIde) {
-          // IDE가 꺼졌는데 아직 반영 안됨 → idle
           setActiveIde(null);
           if (currentState === "coding") {
             setState("idle");
           }
         }
+
+        // bored 감정: 15분+ 미활동 & IDE 꺼짐
+        const currentEmotion = useCatStore.getState().emotion;
+        if (!status.isIdeRunning && status.idleSeconds >= 900) {
+          if (currentEmotion !== "bored") {
+            setEmotion("bored");
+          }
+        } else if (currentEmotion === "bored") {
+          // IDE 감지되거나 활동 재개 → bored 해제
+          clearEmotion();
+        }
       }),
 
-      // ── Git 커밋 → celebrating (임시) + XP ──
+      // ── Git 커밋 → celebrating (임시) + XP + 감정 ──
       listen("git:new-commit", () => {
         if (tempStateTimer.current) clearTimeout(tempStateTimer.current);
         setState("celebrating");
         tempStateTimer.current = setTimeout(() => {
-          // 이전 상태로 복귀
           const ide = useCatStore.getState().activeIde;
           setState(ide ? "coding" : "idle");
         }, 3000);
+
+        // 커밋 스트릭 (5분 내 연속 커밋)
+        incrementCommitStreak();
+        if (commitStreakTimer.current) clearTimeout(commitStreakTimer.current);
+        commitStreakTimer.current = setTimeout(() => {
+          resetCommitStreak();
+        }, 5 * 60_000);
+        const commitCount = useCatStore.getState().recentCommitCount;
+        if (commitCount >= 3) {
+          triggerEmotion("excited", 4000);
+        }
 
         // 커밋 XP +10
         invoke<XpResult>("add_xp", { amount: 10, source: "commit" }).then((res) => {
@@ -200,7 +239,13 @@ function App() {
       // ── XP 레벨업 이벤트 (백엔드에서 emit) ──
       listen<number>("xp:level-up", (event) => {
         triggerLevelUp(event.payload);
+        triggerEmotion("proud", 5000);
         notify("CommitCat", `LEVEL UP! You reached Lv.${event.payload}`);
+      }),
+
+      // ── GitHub PR 머지 → proud 감정 ──
+      listen("github:pr-merged", () => {
+        triggerEmotion("proud", 5000);
       }),
 
       // ── Docker 컨테이너 시작 → coding (IDE 미감지 시) ──
@@ -242,7 +287,7 @@ function App() {
         }, 3000);
       }),
 
-      // ── Plugin: 빌드 성공 → celebrating + 알림 ──
+      // ── Plugin: 빌드 성공 → celebrating + 알림 + 빌드실패 리셋 ──
       listen("plugin:build-success", () => {
         if (tempStateTimer.current) clearTimeout(tempStateTimer.current);
         setState("celebrating");
@@ -251,12 +296,19 @@ function App() {
           setState(ide ? "coding" : "idle");
         }, 3000);
 
+        resetBuildFails();
         notify("CommitCat", "build succeeded! +15 XP 🔨");
       }),
 
-      // ── Plugin: 빌드 실패 ──
+      // ── Plugin: 빌드 실패 → surprised / angry 감정 ──
       listen("plugin:build-fail", () => {
-        // 상태 변경 없음 — 고양이가 슬퍼할 수 있지만 별도 상태 없으므로 로그만
+        incrementBuildFails();
+        const failCount = useCatStore.getState().recentBuildFailCount;
+        if (failCount >= 3) {
+          triggerEmotion("angry", 4000);
+        } else {
+          triggerEmotion("surprised", 3000);
+        }
       }),
 
       // ── 풀스크린 ──
@@ -274,8 +326,11 @@ function App() {
     return () => {
       unlisten.then((fns) => fns.forEach((fn) => fn()));
       if (codingTimer.current) clearInterval(codingTimer.current);
+      if (emotionTimer.current) clearTimeout(emotionTimer.current);
+      if (commitStreakTimer.current) clearTimeout(commitStreakTimer.current);
     };
-  }, [setState, setActiveIde, setIdleSeconds, addCodingMinute, setLevel, triggerLevelUp]);
+  }, [setState, setActiveIde, setIdleSeconds, addCodingMinute, setLevel, triggerLevelUp,
+      setEmotion, clearEmotion, incrementCommitStreak, resetCommitStreak, incrementBuildFails, resetBuildFails]);
 
   return <Cat />;
 }

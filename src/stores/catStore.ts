@@ -11,6 +11,7 @@ type CatState =
 
 type CatMood = "happy" | "sad" | "sleeping" | "focused" | "excited";
 type CatColor = "white" | "brown" | "orange";
+export type CatEmotion = null | "surprised" | "excited" | "proud" | "bored" | "angry";
 
 interface CatStore {
   // State
@@ -30,6 +31,11 @@ interface CatStore {
   todayCodingMinutes: number;
   todayCommits: number;
   todayPomodoros: number;
+
+  // Emotion
+  emotion: CatEmotion;
+  recentCommitCount: number;
+  recentBuildFailCount: number;
 
   // Level up
   levelUp: number | null;
@@ -51,6 +57,12 @@ interface CatStore {
   addCommit: () => void;
   addCodingMinute: () => void;
   addPomodoro: () => void;
+  setEmotion: (emotion: CatEmotion) => void;
+  clearEmotion: () => void;
+  incrementCommitStreak: () => void;
+  resetCommitStreak: () => void;
+  incrementBuildFails: () => void;
+  resetBuildFails: () => void;
   triggerLevelUp: (level: number) => void;
   clearLevelUp: () => void;
   startPomodoro: (totalSeconds: number) => void;
@@ -85,6 +97,10 @@ export const useCatStore = create<CatStore>((set) => ({
   expToNext: 100,
   streakDays: 0,
   catColor: "brown",
+
+  emotion: null,
+  recentCommitCount: 0,
+  recentBuildFailCount: 0,
 
   levelUp: null,
 
@@ -129,6 +145,24 @@ export const useCatStore = create<CatStore>((set) => ({
 
   addPomodoro: () =>
     set((s) => ({ todayPomodoros: s.todayPomodoros + 1 })),
+
+  setEmotion: (emotion) =>
+    set({ emotion }),
+
+  clearEmotion: () =>
+    set({ emotion: null }),
+
+  incrementCommitStreak: () =>
+    set((s) => ({ recentCommitCount: s.recentCommitCount + 1 })),
+
+  resetCommitStreak: () =>
+    set({ recentCommitCount: 0 }),
+
+  incrementBuildFails: () =>
+    set((s) => ({ recentBuildFailCount: s.recentBuildFailCount + 1 })),
+
+  resetBuildFails: () =>
+    set({ recentBuildFailCount: 0 }),
 
   triggerLevelUp: (level) =>
     set({ levelUp: level }),

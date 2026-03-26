@@ -37,6 +37,13 @@ const codingMessages = [
   "I believe in you 💛", "commit when you're ready 📦",
 ];
 
+// 감정별 메시지
+const surprisedMessages = ["whoa! what happened?! 😱", "oh no! 💥", "huh?! 😳", "that was unexpected! 😮"];
+const excitedMessages = ["you're on fire!! 🔥🔥", "commit streak! 🚀", "unstoppable! ⚡", "keep going!! 💪✨"];
+const proudMessages = ["we did it! 🏆", "so proud of us! 🌟", "amazing work! 👑", "look at that! ✨"];
+const boredMessages = ["so bored... 😴", "anyone there? 🥱", "I miss coding... 💤", "come back soon~ 🐾"];
+const angryMessages = ["not again!! 😡", "fix the bugs! 🔥", "grr... 💢", "this is frustrating! 😤"];
+
 type Behavior = "walk" | "stand" | "sit" | "sleep";
 
 interface XpResult {
@@ -161,13 +168,13 @@ export function Cat() {
   const {
     catColor, setCatColor, state: catState, levelUp, clearLevelUp,
     pomodoroActive, startPomodoro, stopPomodoro,
-    setState: setCatState,
+    setState: setCatState, emotion,
   } = useCatStore(useShallow(s => ({
     catColor: s.catColor, setCatColor: s.setCatColor,
     state: s.state, levelUp: s.levelUp, clearLevelUp: s.clearLevelUp,
     pomodoroActive: s.pomodoroActive,
     startPomodoro: s.startPomodoro, stopPomodoro: s.stopPomodoro,
-    setState: s.setState,
+    setState: s.setState, emotion: s.emotion,
   })));
   const appWindow = useRef(getCurrentWindow());
 
@@ -588,6 +595,22 @@ export function Cat() {
     }, duration);
   }, []);
 
+  // ── 감정 변경 시 말풍선 표시 ──
+  useEffect(() => {
+    if (!emotion) return;
+    const msgMap: Record<string, string[]> = {
+      surprised: surprisedMessages,
+      excited: excitedMessages,
+      proud: proudMessages,
+      bored: boredMessages,
+      angry: angryMessages,
+    };
+    const msgs = msgMap[emotion];
+    if (msgs) {
+      showBubble(msgs[Math.floor(Math.random() * msgs.length)], emotion === "bored" ? 4000 : 3000);
+    }
+  }, [emotion, showBubble]);
+
   // ── GitHub 이벤트 ──
   useEffect(() => {
     const unlisten = Promise.all([
@@ -889,7 +912,7 @@ export function Cat() {
       </div>
       <div
         ref={catRef}
-        className={`cat ${isDragging ? "cat--dragging" : ""} ${catState !== "idle" ? `cat--${catState}` : ""}`}
+        className={`cat ${isDragging ? "cat--dragging" : ""} ${catState !== "idle" ? `cat--${catState}` : ""} ${emotion && !showPettingImg ? `cat--emotion-${emotion}` : ""}`}
         onMouseDown={handleMouseDown}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}

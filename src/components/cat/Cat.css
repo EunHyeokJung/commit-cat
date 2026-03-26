@@ -543,3 +543,64 @@
   background: #ccc;
   cursor: default;
 }
+
+/* ══════════════════════════════════════
+   감정 애니메이션 (Emotion System)
+   ══════════════════════════════════════ */
+
+/* surprised — 점프 + 흔들림 */
+.cat--emotion-surprised .cat__image {
+  animation: emotion-surprised 0.5s ease-out 6;
+}
+@keyframes emotion-surprised {
+  0% { transform: translateY(0) rotate(0deg); }
+  20% { transform: translateY(-18px) rotate(-3deg); }
+  40% { transform: translateY(-18px) rotate(3deg); }
+  60% { transform: translateY(-8px) rotate(-2deg); }
+  80% { transform: translateY(-8px) rotate(2deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+/* excited — 바운스 + 노란 glow */
+.cat--emotion-excited .cat__image {
+  animation: emotion-excited 0.4s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(255, 200, 0, 0.6)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+@keyframes emotion-excited {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-12px) scale(1.05); }
+}
+
+/* proud — 부유 + 골든 glow */
+.cat--emotion-proud .cat__image {
+  animation: emotion-proud 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 10px rgba(245, 166, 35, 0.5)) drop-shadow(0 0 20px rgba(245, 166, 35, 0.2)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+@keyframes emotion-proud {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* bored — 좌우 흔들 + 채도 감소 */
+.cat--emotion-bored .cat__image {
+  animation: emotion-bored 3s ease-in-out infinite;
+  filter: saturate(0.4) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+@keyframes emotion-bored {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-3px) rotate(-2deg); }
+  75% { transform: translateX(3px) rotate(2deg); }
+}
+
+/* angry — 빨간 tint + 진동 */
+.cat--emotion-angry .cat__image {
+  animation: emotion-angry 0.1s linear infinite;
+  filter: sepia(0.3) saturate(2) hue-rotate(-30deg) drop-shadow(0 0 6px rgba(229, 57, 53, 0.4)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+@keyframes emotion-angry {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-2px, 1px); }
+  50% { transform: translate(2px, -1px); }
+  75% { transform: translate(-1px, -1px); }
+  100% { transform: translate(1px, 1px); }
+}
