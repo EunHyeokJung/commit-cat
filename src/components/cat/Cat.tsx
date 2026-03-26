@@ -267,6 +267,7 @@ export function Cat() {
   const petTier = useRef(0);           // 0=none, 1=mild, 2=happy, 3=love
   const petLastDirection = useRef<"left" | "right" | null>(null);
   const petLastChangeTime = useRef(0);
+  const [showPettingImg, setShowPettingImg] = useState(false);
 
   // ── AI 채팅 ──
   const [chatOpen, setChatOpen] = useState(false);
@@ -504,6 +505,7 @@ export function Cat() {
 
   // 이미지 경로 결정
   const getImageSrc = () => {
+    if (showPettingImg) return `/assets/cat/${catColor}_petting.png`;
     if (behavior === "sleep") return `/assets/cat/${catColor}_sit2.png`;
     if (behavior === "sit") return `/assets/cat/${catColor}_sit.png`;
     if (behavior === "stand") return `/assets/cat/${catColor}_stand.png`;
@@ -542,7 +544,7 @@ export function Cat() {
 
   // ── 걸어다니기: walk 행동 + walk 프레임일 때만 이동 ──
   useEffect(() => {
-    if (isDragging || behavior !== "walk" || frame === 0) return;
+    if (isDragging || showPettingImg || behavior !== "walk" || frame === 0) return;
     const id = setInterval(() => {
       const pos = winPosRef.current;
       const speed = 0.75;
@@ -720,6 +722,7 @@ export function Cat() {
           showBubble(loveMessages[Math.floor(Math.random() * loveMessages.length)], 3000);
         } else if (score >= 6 && petTier.current < 2) {
           petTier.current = 2;
+          setShowPettingImg(true);
           showBubble(happyMessages[Math.floor(Math.random() * happyMessages.length)], 2500);
         } else if (score >= 3 && petTier.current < 1) {
           petTier.current = 1;
@@ -733,6 +736,7 @@ export function Cat() {
       if (e.button !== 2) return;
       if (!isPettingRef.current) return;
       isPettingRef.current = false;
+      setShowPettingImg(false);
       if (petTier.current === 0) {
         // 쓰담 아님 → 기존 컨텍스트 메뉴 호출
         handleContextMenu(e as unknown as React.MouseEvent);
@@ -895,7 +899,7 @@ export function Cat() {
           style={{ transform: isFlipped ? "scaleX(-1)" : "scaleX(1)" }}
         >
           <img
-            className={`cat__image cat__image--${catColor} ${behavior === "walk" && frame === 1 ? "cat__image--walk" : ""} ${behavior === "sit" ? "cat__image--sit" : ""} ${behavior === "sleep" ? "cat__image--sleep" : ""}`}
+            className={`cat__image cat__image--${catColor} ${showPettingImg ? "cat__image--petting" : ""} ${behavior === "walk" && frame === 1 ? "cat__image--walk" : ""} ${behavior === "sit" ? "cat__image--sit" : ""} ${behavior === "sleep" ? "cat__image--sleep" : ""}`}
             src={imageSrc}
             alt="cat"
             draggable={false}
