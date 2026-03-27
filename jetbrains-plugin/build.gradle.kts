@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.commitcat"
-version = "0.1.0"
+version = "1.0.0"
 
 kotlin {
     jvmToolchain(17)
@@ -33,7 +33,9 @@ intellijPlatform {
         name = "CommitCat"
         version = project.version.toString()
         description = "Connect your JetBrains IDE to the CommitCat desktop pet. " +
-            "Tracks coding time, file changes, saves, and builds."
+            "A pixel-art cat lives on your desktop and grows with your coding activity. " +
+            "Tracks coding time, file changes, saves, and build results — " +
+            "all data stays local on your machine."
         vendor {
             name = "CommitCat"
             url = "https://github.com/eunseo9311/commit-cat"

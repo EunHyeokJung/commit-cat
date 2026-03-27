@@ -1,12 +1,46 @@
 <idea-plugin>
     <id>com.commitcat.plugin</id>
     <name>CommitCat</name>
-    <vendor url="https://github.com/eunseo9311/commit-cat">CommitCat</vendor>
+    <vendor email="eunseo9311@gmail.com" url="https://github.com/eunseo9311/commit-cat">CommitCat</vendor>
+    <category>Tools Integration</category>
 
     <description><![CDATA[
-    Connect your JetBrains IDE to the CommitCat desktop pet.<br/>
-    Tracks coding time, file changes, saves, and builds automatically.
+    <h2>CommitCat — Your Coding Companion</h2>
+    <p>Connect your JetBrains IDE to the <a href="https://github.com/eunseo9311/commit-cat">CommitCat</a> desktop pet.
+    A pixel-art cat lives on your desktop and grows with your coding activity.</p>
+
+    <h3>What it tracks</h3>
+    <ul>
+        <li><b>Coding time</b> — 60-second heartbeat while your IDE is active</li>
+        <li><b>File changes</b> — detects when you switch files (filename + language)</li>
+        <li><b>File saves</b> — reacts when you save your work</li>
+        <li><b>Build results</b> — celebrates on success, reacts on failure (+15 XP on success)</li>
+    </ul>
+
+    <h3>Supported IDEs</h3>
+    <p>IntelliJ IDEA, WebStorm, PyCharm, GoLand, CLion, RustRover, DataGrip, Rider, Android Studio</p>
+
+    <h3>Privacy</h3>
+    <ul>
+        <li>All data stays local — sent only to the CommitCat desktop app on localhost</li>
+        <li>No code content is collected</li>
+        <li>No external servers contacted</li>
+        <li>Plugin silently pauses if CommitCat desktop app is not running</li>
+    </ul>
+
+    <p>Requires the <a href="https://github.com/eunseo9311/commit-cat/releases">CommitCat desktop app</a> to be running.</p>
     ]]></description>
+
+    <change-notes><![CDATA[
+    <h3>1.0.0</h3>
+    <ul>
+        <li>Coding time heartbeat (60s interval)</li>
+        <li>File change and save detection</li>
+        <li>Build success/failure tracking with XP rewards</li>
+        <li>Status bar widget</li>
+        <li>Automatic pause when IDE loses focus</li>
+    </ul>
+    ]]></change-notes>
 
     <depends>com.intellij.modules.platform</depends>
 
