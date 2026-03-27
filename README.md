@@ -181,11 +181,11 @@ npm run tauri dev
 - [x] IDE plugins (VS Code Extension, JetBrains Plugin)
 - [x] Petting interaction & click-through
 
-**v1.1 — Architecture Refactor 🔧**
+**v1.1 — Architecture Refactor ✅**
 - [x] Cargo workspace + `commit-cat-core` crate extraction
-- [ ] Platform trait abstraction (`#[cfg]` cleanup)
-- [ ] Remove duplicated model files in `src-tauri`
-- [ ] State machine integration (core as single source of truth)
+- [x] Platform trait abstraction (`#[cfg]` cleanup)
+- [x] Remove duplicated model files in `src-tauri`
+- [x] State machine integration (core as single source of truth)
 
 **v1.2 — Design & Items 🎨**
 - [ ] Cat design renewal
