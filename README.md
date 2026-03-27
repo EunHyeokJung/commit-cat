@@ -171,22 +171,46 @@ npm run tauri dev
 - [x] Tray / menu bar UI
 - [x] Settings panel
 
-**v1 ✅**
+**v1.0 — Local Complete ✅**
 - [x] Pomodoro focus timer with break timer
 - [x] Daily coding summary & event timeline
 - [x] GitHub integration (PR tracking, star notifications)
 - [x] Claude AI chat companion
-- [x] macOS notifications
-- [x] Windows support
-
-**Next**
-- [x] Linux support
+- [x] macOS / Windows / Linux support
 - [x] Docker integration
 - [x] IDE plugins (VS Code Extension, JetBrains Plugin)
-- [x] Petting interaction
-- [x] Click-through transparent areas
-- [ ] Custom skins
-- [ ] Cloud sync (optional)
+- [x] Petting interaction & click-through
+
+**v1.1 — Architecture Refactor 🔧**
+- [x] Cargo workspace + `commit-cat-core` crate extraction
+- [ ] Platform trait abstraction (`#[cfg]` cleanup)
+- [ ] Remove duplicated model files in `src-tauri`
+- [ ] State machine integration (core as single source of truth)
+
+**v1.2 — Design & Items 🎨**
+- [ ] Cat design renewal
+- [ ] Item system (hats, accessories, milestone rewards)
+- [ ] Auto-equip items (birthday hat, commit streak crown, etc.)
+- [ ] JetBrains Extension marketplace release
+
+**v1.3 — VSCode Webview 🖥️**
+- [ ] Cat rendering inside VSCode (Webview Panel)
+- [ ] Environment detection (desktop / Codespaces / web)
+
+**v2.0 — Cloud ☁️**
+- [ ] Cloud API server (Rust + Axum)
+- [ ] Cross-device sync (event-based, offline-first)
+- [ ] GitHub OAuth
+
+**v2.1 — Badge & Profile 🏅**
+- [ ] GitHub README badge (`![CommitCat](api.commitcat.dev/badge/user)`)
+- [ ] Public profile page
+- [ ] GitHub Codespaces support
+
+**v3.0 — Multi-Platform 🌐**
+- [ ] Discord bot integration
+- [ ] External app widgets
+- [ ] Community features (leaderboard, team stats)
 
 ---
 
@@ -208,5 +232,5 @@ MIT License
 
 ## 💬 Status
 
-v1 feature-complete — actively developing
+v1.1 in progress — architecture refactor for cloud expansion
 If you like the idea, consider giving the repo a ⭐
