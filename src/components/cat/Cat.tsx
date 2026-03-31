@@ -193,7 +193,7 @@ export function Cat() {
       if (busy) { queued = ignore; return; }
       busy = true;
       try {
-        await win.setIgnoreCursorEvents(ignore, { forward: true });
+        await win.setIgnoreCursorEvents(ignore);
       } catch (_) {}
       busy = false;
       if (queued !== null) {

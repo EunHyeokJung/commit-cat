@@ -58,7 +58,7 @@ export function SubCat({ color }: { color: CatColor }) {
     const applyIgnore = async (ignore: boolean) => {
       if (busy) { queued = ignore; return; }
       busy = true;
-      try { await win.setIgnoreCursorEvents(ignore, { forward: true }); } catch (_) {}
+      try { await win.setIgnoreCursorEvents(ignore); } catch (_) {}
       busy = false;
       if (queued !== null) {
         const next = queued;
