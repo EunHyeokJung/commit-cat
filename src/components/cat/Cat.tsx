@@ -720,6 +720,7 @@ export function Cat() {
     ignoreRef.current = false;
     setIsDragging(true);
     appWindow.current.setIgnoreCursorEvents(false).catch(() => {});
+    appWindow.current.setSize(new LogicalSize(250, 200)).catch(() => {});
     didDrag.current = false;
     dragStartMouse.current = { x: e.screenX, y: e.screenY };
     dragStartWin.current = { ...winPosRef.current };
@@ -736,6 +737,7 @@ export function Cat() {
     const handleUp = () => {
       setIsDragging(false);
       isDraggingRef.current = false;
+      appWindow.current.setSize(new LogicalSize(WIN_W, 150)).catch(() => {});
       if (didDrag.current) showBubble("wheee~! 🎢", 1500);
     };
     window.addEventListener("mousemove", handleMove);
