@@ -528,6 +528,7 @@ export function Cat() {
 
   // 이미지 경로 결정
   const getImageSrc = () => {
+    if (isDragging) return `/assets/cat/${catColor}_grab.png`;
     if (showPettingImg) return `/assets/cat/${catColor}_petting.png`;
     if (behavior === "sleep") return `/assets/cat/${catColor}_sit2.png`;
     if (behavior === "sit") return `/assets/cat/${catColor}_sit.png`;
