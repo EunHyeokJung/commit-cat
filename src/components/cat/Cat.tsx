@@ -725,6 +725,8 @@ export function Cat() {
   const pendingDragRef = useRef(false); // mousedown 했지만 아직 드래그 아닌 상태
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault(); // OS 제스처(Mission Control 등) 방지
+    e.stopPropagation();
     if (e.button === 2) {
       isPettingRef.current = true;
       petLastX.current = e.screenX;
@@ -735,7 +737,6 @@ export function Cat() {
       return;
     }
     if (e.button !== 0) return;
-    // 즉시 드래그 시작하지 않음 — threshold 이후 전환
     pendingDragRef.current = true;
     didDrag.current = false;
     dragStartMouse.current = { x: e.screenX, y: e.screenY };
