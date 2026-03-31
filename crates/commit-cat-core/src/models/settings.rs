@@ -45,9 +45,21 @@ pub struct AppSettings {
     /// OpenAI API key (AI 채팅)
     #[serde(default)]
     pub openai_api_key: Option<String>,
-    /// AI provider: "claude" or "openai" (default: "claude")
+    /// AI provider identifier (default: "claude")
+    /// Supported values:
+    /// - "claude"
+    /// - "openai-api" (legacy alias: "openai")
+    /// - "openai-codex-local"
     #[serde(default = "default_ai_provider")]
     pub ai_provider: String,
+    /// Provider별 마지막으로 선택한 model identifier
+    /// key: provider id, value: model id
+    #[serde(default)]
+    pub ai_provider_models: HashMap<String, String>,
+    /// Provider/model별 마지막으로 선택한 reasoning effort override
+    /// key: "{provider}::{model}", value: reasoning effort
+    #[serde(default)]
+    pub ai_provider_reasoning: HashMap<String, String>,
     /// 동료 고양이 최대 수 (0 = 메인만, 1 = +1, 2 = +2)
     #[serde(default = "default_max_companions")]
     pub max_companions: u32,
@@ -56,10 +68,18 @@ pub struct AppSettings {
     pub sub_cats_enabled: Option<bool>,
 }
 
-fn default_max_companions() -> u32 { 2 }
-fn default_break_minutes() -> u32 { 5 }
-fn default_true() -> bool { true }
-fn default_ai_provider() -> String { "claude".to_string() }
+fn default_max_companions() -> u32 {
+    2
+}
+fn default_break_minutes() -> u32 {
+    5
+}
+fn default_true() -> bool {
+    true
+}
+fn default_ai_provider() -> String {
+    "claude".to_string()
+}
 
 impl Default for AppSettings {
     fn default() -> Self {
@@ -82,6 +102,8 @@ impl Default for AppSettings {
             anthropic_api_key: None,
             openai_api_key: None,
             ai_provider: default_ai_provider(),
+            ai_provider_models: HashMap::new(),
+            ai_provider_reasoning: HashMap::new(),
             max_companions: default_max_companions(),
             sub_cats_enabled: None,
         }

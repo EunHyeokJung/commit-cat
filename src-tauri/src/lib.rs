@@ -5,8 +5,8 @@ pub mod platform;
 mod services;
 mod utils;
 
-use tauri::Manager;
 use tauri::menu::MenuBuilder;
+use tauri::Manager;
 
 #[cfg(target_os = "macos")]
 use cocoa::appkit::{NSColor, NSWindow};
@@ -68,7 +68,8 @@ pub fn run() {
                 if let Ok(data) = services::storage::load(&app_handle) {
                     let streak = data.cat.streak_days;
                     if streak > 0 {
-                        let _ = tray.set_tooltip(Some(&format!("CommitCat — {} day streak", streak)));
+                        let _ =
+                            tray.set_tooltip(Some(&format!("CommitCat — {} day streak", streak)));
                     } else {
                         let _ = tray.set_tooltip(Some("CommitCat"));
                     }
@@ -79,7 +80,8 @@ pub fn run() {
                     if let tauri::tray::TrayIconEvent::Click {
                         button_state: tauri::tray::MouseButtonState::Up,
                         ..
-                    } = event {
+                    } = event
+                    {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("cat-overlay") {
                             let should_hide = window.is_visible().unwrap_or(false);
@@ -106,9 +108,15 @@ pub fn run() {
                 tray.on_menu_event(|app, event| {
                     use tauri::Emitter;
                     match event.id().as_ref() {
-                        "cat-orange" => { let _ = app.emit("change-cat-color", "orange"); }
-                        "cat-brown" => { let _ = app.emit("change-cat-color", "brown"); }
-                        "cat-white" => { let _ = app.emit("change-cat-color", "white"); }
+                        "cat-orange" => {
+                            let _ = app.emit("change-cat-color", "orange");
+                        }
+                        "cat-brown" => {
+                            let _ = app.emit("change-cat-color", "brown");
+                        }
+                        "cat-white" => {
+                            let _ = app.emit("change-cat-color", "white");
+                        }
                         "settings" => {
                             // 이미 열려있으면 포커스, 아니면 새로 생성
                             if let Some(win) = app.get_webview_window("settings") {
@@ -132,7 +140,9 @@ pub fn run() {
                                 let _ = services::update::check_update(&handle).await;
                             });
                         }
-                        "quit" => { app.exit(0); }
+                        "quit" => {
+                            app.exit(0);
+                        }
                         _ => {}
                     }
                 });
@@ -204,6 +214,7 @@ pub fn run() {
             // Settings
             commands::settings::get_settings,
             commands::settings::update_settings,
+            commands::settings::update_settings_patch,
             // Fullscreen
             commands::fullscreen::check_fullscreen,
             // XP
@@ -217,6 +228,8 @@ pub fn run() {
             commands::update::check_for_update,
             // AI
             commands::ai::chat_with_cat,
+            commands::ai::get_ai_provider_catalog,
+            commands::ai::get_codex_provider_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Commit Cat");
