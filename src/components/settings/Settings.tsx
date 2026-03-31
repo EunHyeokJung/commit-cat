@@ -31,7 +31,7 @@ export function Settings() {
   const [githubConnecting, setGithubConnecting] = useState(false);
   const [githubError, setGithubError] = useState("");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [subCatsEnabled, setSubCatsEnabled] = useState(true);
+  const [maxCompanions, setMaxCompanions] = useState(2);
   const [aiKey, setAiKey] = useState("");
   const [aiKeySaved, setAiKeySaved] = useState(false);
   const [aiSaving, setAiSaving] = useState(false);
@@ -45,7 +45,7 @@ export function Settings() {
       try {
         const [repoList, settings, xpStatus] = await Promise.all([
           invoke<string[]>("get_watched_repos"),
-          invoke<{ catColor?: CatColor; pomodoroMinutes?: number; breakMinutes?: number; githubUsername?: string | null; notificationsEnabled?: boolean; anthropicApiKey?: string | null; openaiApiKey?: string | null; aiProvider?: string; subCatsEnabled?: boolean }>("get_settings"),
+          invoke<{ catColor?: CatColor; pomodoroMinutes?: number; breakMinutes?: number; githubUsername?: string | null; notificationsEnabled?: boolean; anthropicApiKey?: string | null; openaiApiKey?: string | null; aiProvider?: string; maxCompanions?: number }>("get_settings"),
           invoke<XpStatus>("get_xp_status"),
         ]);
         setRepos(repoList);
@@ -54,7 +54,7 @@ export function Settings() {
         if (settings.breakMinutes) setBreakMinutes(settings.breakMinutes);
         if (settings.githubUsername) setGithubUsername(settings.githubUsername);
         if (settings.notificationsEnabled !== undefined) setNotificationsEnabled(settings.notificationsEnabled);
-        if (settings.subCatsEnabled !== undefined) setSubCatsEnabled(settings.subCatsEnabled);
+        if (settings.maxCompanions !== undefined) setMaxCompanions(settings.maxCompanions);
         if (settings.anthropicApiKey) setAiKeySaved(true);
         if (settings.openaiApiKey) setOpenaiKeySaved(true);
         if (settings.aiProvider) setAiProvider(settings.aiProvider as "claude" | "openai");
@@ -217,18 +217,18 @@ export function Settings() {
     }
   }, [notificationsEnabled]);
 
-  // 서브 고양이 토글
-  const handleSubCatsToggle = useCallback(async () => {
-    const next = !subCatsEnabled;
-    setSubCatsEnabled(next);
+  // 동료 고양이 수 변경
+  const handleCompanionsChange = useCallback(async (value: number) => {
+    const clamped = Math.max(0, Math.min(2, value));
+    setMaxCompanions(clamped);
     try {
       const current = await invoke<Record<string, unknown>>("get_settings");
-      await invoke("update_settings", { settings: { ...current, subCatsEnabled: next } });
-      await emit("sub-cats-toggle", next);
+      await invoke("update_settings", { settings: { ...current, maxCompanions: clamped } });
+      await emit("companions-change", clamped);
     } catch (e) {
-      console.error("Failed to update sub cats:", e);
+      console.error("Failed to update companions:", e);
     }
-  }, [subCatsEnabled]);
+  }, []);
 
   // AI API Key 저장
   const handleAiSave = useCallback(async () => {
@@ -394,13 +394,12 @@ export function Settings() {
           </div>
         </div>
         <div className="settings__toggle-row">
-          <span className="settings__toggle-label">Sub Cats</span>
-          <button
-            className={`settings__toggle ${subCatsEnabled ? "settings__toggle--on" : ""}`}
-            onClick={handleSubCatsToggle}
-          >
-            <span className="settings__toggle-knob" />
-          </button>
+          <span className="settings__toggle-label">Companions</span>
+          <div className="settings__stepper">
+            <button className="settings__stepper-btn" onClick={() => handleCompanionsChange(maxCompanions - 1)}>-</button>
+            <span className="settings__stepper-value">{maxCompanions}</span>
+            <button className="settings__stepper-btn" onClick={() => handleCompanionsChange(maxCompanions + 1)}>+</button>
+          </div>
         </div>
       </section>
 

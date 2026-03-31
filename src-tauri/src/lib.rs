@@ -82,10 +82,21 @@ pub fn run() {
                     } = event {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("cat-overlay") {
-                            if window.is_visible().unwrap_or(false) {
+                            let should_hide = window.is_visible().unwrap_or(false);
+                            if should_hide {
                                 let _ = window.hide();
                             } else {
                                 let _ = window.show();
+                            }
+                            // Also toggle sub-cat windows
+                            for (label, win) in app.webview_windows() {
+                                if label.starts_with("cat-sub-") {
+                                    if should_hide {
+                                        let _ = win.hide();
+                                    } else {
+                                        let _ = win.show();
+                                    }
+                                }
                             }
                         }
                     }

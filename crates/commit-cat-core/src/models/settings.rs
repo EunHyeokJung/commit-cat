@@ -48,11 +48,15 @@ pub struct AppSettings {
     /// AI provider: "claude" or "openai" (default: "claude")
     #[serde(default = "default_ai_provider")]
     pub ai_provider: String,
-    /// 서브 고양이 표시
-    #[serde(default = "default_true")]
-    pub sub_cats_enabled: bool,
+    /// 동료 고양이 최대 수 (0 = 메인만, 1 = +1, 2 = +2)
+    #[serde(default = "default_max_companions")]
+    pub max_companions: u32,
+    /// deprecated: 이전 버전 호환용
+    #[serde(default)]
+    pub sub_cats_enabled: Option<bool>,
 }
 
+fn default_max_companions() -> u32 { 2 }
 fn default_break_minutes() -> u32 { 5 }
 fn default_true() -> bool { true }
 fn default_ai_provider() -> String { "claude".to_string() }
@@ -78,7 +82,8 @@ impl Default for AppSettings {
             anthropic_api_key: None,
             openai_api_key: None,
             ai_provider: default_ai_provider(),
-            sub_cats_enabled: true,
+            max_companions: default_max_companions(),
+            sub_cats_enabled: None,
         }
     }
 }

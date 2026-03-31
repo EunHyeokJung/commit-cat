@@ -107,12 +107,13 @@ function App() {
       try {
         const [status, settings] = await Promise.all([
           invoke<XpStatus>("get_xp_status"),
-          invoke<{ subCatsEnabled?: boolean }>("get_settings"),
+          invoke<{ maxCompanions?: number }>("get_settings"),
         ]);
         setLevel(status.level, status.currentExp, status.expToNext);
-        // 초기 로드 후 서브 고양이 동기화 (설정이 켜져있을 때만)
-        if (settings.subCatsEnabled !== false) {
-          setTimeout(() => useCatStore.getState().syncSubCats(), 0);
+        // 초기 로드 후 서브 고양이 동기화 (maxCompanions > 0일 때만)
+        const companions = settings.maxCompanions ?? 2;
+        if (companions > 0) {
+          setTimeout(() => useCatStore.getState().syncSubCats(companions), 0);
         }
       } catch (e) {
         console.error("Failed to load XP status:", e);
@@ -348,8 +349,9 @@ function App() {
   useEffect(() => {
     const unlisten = listen<number>("xp:level-up", async () => {
       try {
-        const settings = await invoke<{ subCatsEnabled?: boolean }>("get_settings");
-        if (settings.subCatsEnabled !== false) syncSubCats();
+        const settings = await invoke<{ maxCompanions?: number }>("get_settings");
+        const companions = settings.maxCompanions ?? 2;
+        if (companions > 0) syncSubCats(companions);
       } catch (_) {}
     });
     return () => { unlisten.then((fn) => fn()); };
@@ -364,11 +366,12 @@ function App() {
     return () => { unlisten.then((fn) => fn()); };
   }, []);
 
-  // 서브 고양이 토글 (설정에서 on/off)
+  // 동료 고양이 수 변경 (설정에서 0/1/2)
   useEffect(() => {
-    const unlisten = listen<boolean>("sub-cats-toggle", (event) => {
-      if (event.payload) {
-        syncSubCats();
+    const unlisten = listen<number>("companions-change", (event) => {
+      const companions = event.payload;
+      if (companions > 0) {
+        syncSubCats(companions);
       } else {
         // 모든 서브 고양이 제거
         const subs = useCatStore.getState().subCats;

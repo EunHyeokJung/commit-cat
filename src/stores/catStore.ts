@@ -20,10 +20,10 @@ export interface SubCat {
 
 const ALL_COLORS: CatColor[] = ["white", "brown", "orange"];
 
-export function getMaxCats(level: number): number {
-  if (level < 10) return 1;
-  if (level < 30) return 2;
-  return 3;
+export function getMaxCats(level: number, maxCompanions: number = 2): number {
+  const levelMax = level < 10 ? 1 : level < 30 ? 2 : 3;
+  // total cats = main + companions, capped by level
+  return Math.min(1 + maxCompanions, levelMax);
 }
 
 interface CatStore {
@@ -68,7 +68,7 @@ interface CatStore {
   setState: (state: string) => void;
   setLevel: (level: number, exp: number, expToNext: number) => void;
   setCatColor: (color: CatColor) => void;
-  syncSubCats: () => void;
+  syncSubCats: (maxCompanions?: number) => void;
   setActiveIde: (ide: string | null) => void;
   setIdleSeconds: (seconds: number) => void;
   addCommit: () => void;
@@ -150,9 +150,10 @@ export const useCatStore = create<CatStore>((set) => ({
   setCatColor: (color) =>
     set({ catColor: color }),
 
-  syncSubCats: () =>
+  syncSubCats: (maxCompanions?: number) =>
     set((s) => {
-      const maxSubs = getMaxCats(s.level) - 1; // minus main cat
+      const companions = maxCompanions ?? 2;
+      const maxSubs = getMaxCats(s.level, companions) - 1; // minus main cat
       if (maxSubs <= 0) return { subCats: [] };
       const available = ALL_COLORS.filter((c) => c !== s.catColor);
       const newSubs: SubCat[] = [];
