@@ -816,10 +816,24 @@ export function Cat() {
     if (chatOpen || chatLoading) return;
     try {
       const settings = await invoke<{ anthropicApiKey?: string | null; openaiApiKey?: string | null; aiProvider?: string }>("get_settings");
-      const provider = settings.aiProvider || "claude";
-      const hasKey = provider === "openai" ? !!settings.openaiApiKey : !!settings.anthropicApiKey;
-      if (!hasKey) {
-        showBubble("set API key in settings first 🔑", 3000);
+      const provider = settings.aiProvider === "openai" ? "openai-api" : (settings.aiProvider || "claude");
+
+      if (provider === "openai-codex-local") {
+        const codexStatus = await invoke<{ available: boolean; connected: boolean; statusMessage: string }>("get_codex_provider_status");
+        if (!codexStatus.available || !codexStatus.connected) {
+          showBubble(codexStatus.statusMessage, 3000);
+          return;
+        }
+      } else {
+        const hasKey = provider === "openai-api" ? !!settings.openaiApiKey : !!settings.anthropicApiKey;
+        if (!hasKey) {
+          showBubble("set API key in settings first 🔑", 3000);
+          return;
+        }
+      }
+
+      if (!["claude", "openai-api", "openai-codex-local"].includes(provider)) {
+        showBubble("check AI provider in settings ⚙️", 3000);
         return;
       }
     } catch (_) {

@@ -1,5 +1,5 @@
 use commit_cat_core::models::settings::AppData;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
 
@@ -18,11 +18,6 @@ fn data_dir(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
-/// 데이터 파일 경로
-fn data_path(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(data_dir(app)?.join(DATA_FILE))
-}
-
 /// 초기화: 데이터 파일이 없으면 기본값으로 생성
 pub fn init(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let dir = data_dir(app)?;
@@ -39,21 +34,42 @@ pub fn init(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 
 /// 데이터 로드 (파싱 실패 시 백업에서 복구)
 pub fn load(app: &AppHandle) -> Result<AppData, String> {
-    let path = data_path(app)?;
-    let content = std::fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read data: {}", e))?;
+    load_from_dir(&data_dir(app)?)
+}
+
+/// 데이터 저장 (atomic write + 백업)
+pub fn save(app: &AppHandle, data: &AppData) -> Result<(), String> {
+    let _lock = SAVE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    save_to_dir(&data_dir(app)?, data)
+}
+
+/// 데이터를 읽고 수정한 뒤 같은 락 범위에서 저장
+pub fn update<R, F>(app: &AppHandle, mutate: F) -> Result<R, String>
+where
+    F: FnOnce(&mut AppData) -> Result<R, String>,
+{
+    let _lock = SAVE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let dir = data_dir(app)?;
+    let mut data = load_from_dir(&dir)?;
+    let result = mutate(&mut data)?;
+    save_to_dir(&dir, &data)?;
+    Ok(result)
+}
+
+fn load_from_dir(dir: &Path) -> Result<AppData, String> {
+    let path = dir.join(DATA_FILE);
+    let content =
+        std::fs::read_to_string(&path).map_err(|e| format!("Failed to read data: {}", e))?;
 
     match serde_json::from_str(&content) {
         Ok(data) => Ok(data),
         Err(e) => {
-            // 메인 파일 파싱 실패 → 백업에서 복구 시도
-            let backup_path = data_dir(app)?.join(BACKUP_FILE);
+            let backup_path = dir.join(BACKUP_FILE);
             if backup_path.exists() {
                 let backup_content = std::fs::read_to_string(&backup_path)
                     .map_err(|e| format!("Failed to read backup: {}", e))?;
                 let data: AppData = serde_json::from_str(&backup_content)
                     .map_err(|_| format!("Both data and backup corrupted: {}", e))?;
-                // 백업으로 메인 파일 복구
                 let _ = std::fs::copy(&backup_path, &path);
                 Ok(data)
             } else {
@@ -63,17 +79,13 @@ pub fn load(app: &AppHandle) -> Result<AppData, String> {
     }
 }
 
-/// 데이터 저장 (atomic write + 백업)
-pub fn save(app: &AppHandle, data: &AppData) -> Result<(), String> {
-    let _lock = SAVE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
-
-    let dir = data_dir(app)?;
+fn save_to_dir(dir: &Path, data: &AppData) -> Result<(), String> {
     let path = dir.join(DATA_FILE);
     let backup_path = dir.join(BACKUP_FILE);
     let tmp_path = dir.join("commit-cat-data.tmp.json");
 
-    let json = serde_json::to_string_pretty(data)
-        .map_err(|e| format!("Failed to serialize: {}", e))?;
+    let json =
+        serde_json::to_string_pretty(data).map_err(|e| format!("Failed to serialize: {}", e))?;
 
     // 1. 현재 파일을 백업
     if path.exists() {
@@ -81,12 +93,10 @@ pub fn save(app: &AppHandle, data: &AppData) -> Result<(), String> {
     }
 
     // 2. 임시 파일에 쓰기
-    std::fs::write(&tmp_path, &json)
-        .map_err(|e| format!("Failed to write temp: {}", e))?;
+    std::fs::write(&tmp_path, &json).map_err(|e| format!("Failed to write temp: {}", e))?;
 
     // 3. 임시 파일 → 메인 파일로 rename (atomic)
-    std::fs::rename(&tmp_path, &path)
-        .map_err(|e| format!("Failed to rename: {}", e))
+    std::fs::rename(&tmp_path, &path).map_err(|e| format!("Failed to rename: {}", e))
 }
 
 /// History 관리: 90일 초과 데이터 정리
@@ -99,13 +109,7 @@ pub fn cleanup_history(data: &mut AppData) {
 /// 등록된 Git 저장소 목록 반환
 pub fn get_watched_repos(app: &AppHandle) -> Vec<PathBuf> {
     load(app)
-        .map(|data| {
-            data.settings
-                .git_repos
-                .iter()
-                .map(PathBuf::from)
-                .collect()
-        })
+        .map(|data| data.settings.git_repos.iter().map(PathBuf::from).collect())
         .unwrap_or_default()
 }
 

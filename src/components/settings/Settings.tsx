@@ -11,6 +11,133 @@ interface XpStatus {
 }
 
 type CatColor = "white" | "brown" | "orange";
+type AIProvider = "claude" | "openai-api" | "openai-codex-local";
+
+interface CodexProviderStatus {
+  available: boolean;
+  authenticated: boolean;
+  connected: boolean;
+  statusMessage: string;
+}
+
+interface SettingsPayload {
+  catColor?: CatColor;
+  pomodoroMinutes?: number;
+  breakMinutes?: number;
+  githubUsername?: string | null;
+  notificationsEnabled?: boolean;
+  anthropicApiKey?: string | null;
+  openaiApiKey?: string | null;
+  aiProvider?: string;
+  aiProviderModels?: Record<string, string>;
+  aiProviderReasoning?: Record<string, string>;
+  maxCompanions?: number;
+}
+
+interface AIProviderModelOption {
+  id: string;
+  label: string;
+  reasoningEfforts?: AIReasoningOption[];
+  defaultReasoning?: string;
+}
+
+interface AIReasoningOption {
+  id: string;
+  label: string;
+}
+
+interface AIProviderCatalogEntry {
+  id: AIProvider;
+  label: string;
+  description: string;
+  defaultModel: string;
+  models: AIProviderModelOption[];
+}
+
+interface AIProviderCatalogResponse {
+  providers: AIProviderCatalogEntry[];
+}
+
+function normalizeAiProvider(value?: string | null): AIProvider {
+  if (value === "openai" || value === "openai-api") return "openai-api";
+  if (value === "openai-codex-local") return "openai-codex-local";
+  return "claude";
+}
+
+function normalizeAiProviderModels(value?: Record<string, string> | null): Record<string, string> {
+  const next = { ...(value ?? {}) };
+  if (next.openai && !next["openai-api"]) {
+    next["openai-api"] = next.openai;
+  }
+  delete next.openai;
+  return next;
+}
+
+function reasoningStorageKey(providerId: AIProvider, modelId: string): string {
+  return `${providerId}::${modelId}`;
+}
+
+function migrateLegacyReasoningMap(
+  reasoning: Record<string, string>,
+  providerModels: Record<string, string>,
+  catalog: AIProviderCatalogEntry[],
+): Record<string, string> {
+  const next: Record<string, string> = {};
+  for (const [rawKey, value] of Object.entries(reasoning)) {
+    const trimmedValue = value.trim();
+    if (!trimmedValue) continue;
+
+    if (rawKey.includes("::")) {
+      const [rawProvider, rawModel] = rawKey.split("::", 2);
+      if (!rawModel) continue;
+      next[reasoningStorageKey(normalizeAiProvider(rawProvider), rawModel)] = trimmedValue;
+      continue;
+    }
+
+    const provider = normalizeAiProvider(rawKey);
+    const providerEntry = catalog.find(candidate => candidate.id === provider);
+    const selectedModel = providerModels[provider] ?? providerEntry?.defaultModel ?? "";
+    if (!selectedModel) continue;
+    next[reasoningStorageKey(provider, selectedModel)] = trimmedValue;
+  }
+  return next;
+}
+
+function resolveSelectedModel(
+  providerId: AIProvider,
+  providerModels: Record<string, string>,
+  provider?: AIProviderCatalogEntry | null,
+): string {
+  if (!provider) return "";
+  const selectedModel = providerModels[providerId];
+  if (selectedModel && provider.models.some(model => model.id === selectedModel)) {
+    return selectedModel;
+  }
+  return provider.defaultModel;
+}
+
+function resolveSelectedReasoning(
+  providerId: AIProvider,
+  providerReasoning: Record<string, string>,
+  model?: AIProviderModelOption,
+): string {
+  const options = model?.reasoningEfforts ?? [];
+  if (options.length === 0) return "";
+  const selectedReasoning = providerReasoning[reasoningStorageKey(providerId, model?.id ?? "")];
+  if (!selectedReasoning || selectedReasoning === model?.defaultReasoning) {
+    if (model?.defaultReasoning) {
+      return "";
+    }
+    return options[0]?.id ?? "";
+  }
+  if (selectedReasoning && options.some(option => option.id === selectedReasoning)) {
+    return selectedReasoning;
+  }
+  if (!model?.defaultReasoning) {
+    return options[0]?.id ?? "";
+  }
+  return "";
+}
 
 export function Settings() {
   const [repos, setRepos] = useState<string[]>([]);
@@ -37,16 +164,52 @@ export function Settings() {
   const [aiSaving, setAiSaving] = useState(false);
   const [openaiKey, setOpenaiKey] = useState("");
   const [openaiKeySaved, setOpenaiKeySaved] = useState(false);
-  const [aiProvider, setAiProvider] = useState<"claude" | "openai">("claude");
+  const [aiProvider, setAiProvider] = useState<AIProvider>("claude");
+  const [aiProviderModels, setAiProviderModels] = useState<Record<string, string>>({});
+  const [aiProviderReasoning, setAiProviderReasoning] = useState<Record<string, string>>({});
+  const [aiProviderCatalog, setAiProviderCatalog] = useState<AIProviderCatalogEntry[]>([]);
+  const [codexStatus, setCodexStatus] = useState<CodexProviderStatus>({
+    available: false,
+    authenticated: false,
+    connected: false,
+    statusMessage: "Checking local Codex provider...",
+  });
+  const [codexChecking, setCodexChecking] = useState(false);
+
+  const refreshCodexStatus = useCallback(async () => {
+    setCodexChecking(true);
+    try {
+      const status = await invoke<CodexProviderStatus>("get_codex_provider_status");
+      setCodexStatus(status);
+    } catch (e) {
+      setCodexStatus({
+        available: false,
+        authenticated: false,
+        connected: false,
+        statusMessage: String(e),
+      });
+    } finally {
+      setCodexChecking(false);
+    }
+  }, []);
 
   // 초기 데이터 로드
   useEffect(() => {
+    void refreshCodexStatus();
+  }, [refreshCodexStatus]);
+
+  const persistSettingsPatch = useCallback(async (patch: Record<string, unknown>) => {
+    await invoke("update_settings_patch", { patch });
+  }, []);
+
+  useEffect(() => {
     (async () => {
       try {
-        const [repoList, settings, xpStatus] = await Promise.all([
+        const [repoList, settings, xpStatus, catalog] = await Promise.all([
           invoke<string[]>("get_watched_repos"),
-          invoke<{ catColor?: CatColor; pomodoroMinutes?: number; breakMinutes?: number; githubUsername?: string | null; notificationsEnabled?: boolean; anthropicApiKey?: string | null; openaiApiKey?: string | null; aiProvider?: string; maxCompanions?: number }>("get_settings"),
+          invoke<SettingsPayload>("get_settings"),
           invoke<XpStatus>("get_xp_status"),
+          invoke<AIProviderCatalogResponse>("get_ai_provider_catalog"),
         ]);
         setRepos(repoList);
         if (settings.catColor) setCatColor(settings.catColor);
@@ -57,7 +220,17 @@ export function Settings() {
         if (settings.maxCompanions !== undefined) setMaxCompanions(settings.maxCompanions);
         if (settings.anthropicApiKey) setAiKeySaved(true);
         if (settings.openaiApiKey) setOpenaiKeySaved(true);
-        if (settings.aiProvider) setAiProvider(settings.aiProvider as "claude" | "openai");
+        const normalizedProvider = normalizeAiProvider(settings.aiProvider);
+        const normalizedModels = normalizeAiProviderModels(settings.aiProviderModels);
+        const normalizedReasoning = migrateLegacyReasoningMap(
+          { ...(settings.aiProviderReasoning ?? {}) },
+          normalizedModels,
+          catalog.providers,
+        );
+        setAiProvider(normalizedProvider);
+        setAiProviderModels(normalizedModels);
+        setAiProviderReasoning(normalizedReasoning);
+        setAiProviderCatalog(catalog.providers);
         setXp(xpStatus);
       } catch (e) {
         console.error("Failed to load settings:", e);
@@ -161,23 +334,21 @@ export function Settings() {
     const clamped = Math.max(1, Math.min(120, val));
     setFocusMinutes(clamped);
     try {
-      const current = await invoke<Record<string, unknown>>("get_settings");
-      await invoke("update_settings", { settings: { ...current, pomodoroMinutes: clamped } });
+      await persistSettingsPatch({ pomodoroMinutes: clamped });
     } catch (e) {
       console.error("Failed to update focus minutes:", e);
     }
-  }, []);
+  }, [persistSettingsPatch]);
 
   const handleBreakChange = useCallback(async (val: number) => {
     const clamped = Math.max(1, Math.min(60, val));
     setBreakMinutes(clamped);
     try {
-      const current = await invoke<Record<string, unknown>>("get_settings");
-      await invoke("update_settings", { settings: { ...current, breakMinutes: clamped } });
+      await persistSettingsPatch({ breakMinutes: clamped });
     } catch (e) {
       console.error("Failed to update break minutes:", e);
     }
-  }, []);
+  }, [persistSettingsPatch]);
 
   // GitHub 연결
   const handleGithubConnect = useCallback(async () => {
@@ -210,33 +381,30 @@ export function Settings() {
     const next = !notificationsEnabled;
     setNotificationsEnabled(next);
     try {
-      const current = await invoke<Record<string, unknown>>("get_settings");
-      await invoke("update_settings", { settings: { ...current, notificationsEnabled: next } });
+      await persistSettingsPatch({ notificationsEnabled: next });
     } catch (e) {
       console.error("Failed to update notifications:", e);
     }
-  }, [notificationsEnabled]);
+  }, [notificationsEnabled, persistSettingsPatch]);
 
   // 동료 고양이 수 변경
   const handleCompanionsChange = useCallback(async (value: number) => {
     const clamped = Math.max(0, Math.min(2, value));
     setMaxCompanions(clamped);
     try {
-      const current = await invoke<Record<string, unknown>>("get_settings");
-      await invoke("update_settings", { settings: { ...current, maxCompanions: clamped } });
+      await persistSettingsPatch({ maxCompanions: clamped });
       await emit("companions-change", clamped);
     } catch (e) {
       console.error("Failed to update companions:", e);
     }
-  }, []);
+  }, [persistSettingsPatch]);
 
   // AI API Key 저장
   const handleAiSave = useCallback(async () => {
     if (!aiKey.trim()) return;
     setAiSaving(true);
     try {
-      const current = await invoke<Record<string, unknown>>("get_settings");
-      await invoke("update_settings", { settings: { ...current, anthropicApiKey: aiKey.trim() } });
+      await persistSettingsPatch({ anthropicApiKey: aiKey.trim() });
       setAiKeySaved(true);
       setAiKey("");
     } catch (e) {
@@ -244,53 +412,83 @@ export function Settings() {
     } finally {
       setAiSaving(false);
     }
-  }, [aiKey]);
+  }, [aiKey, persistSettingsPatch]);
 
   // AI API Key 삭제
   const handleAiRemove = useCallback(async () => {
     try {
-      const current = await invoke<Record<string, unknown>>("get_settings");
-      await invoke("update_settings", { settings: { ...current, anthropicApiKey: null } });
+      await persistSettingsPatch({ anthropicApiKey: null });
       setAiKeySaved(false);
     } catch (e) {
       console.error("Failed to remove AI key:", e);
     }
-  }, []);
+  }, [persistSettingsPatch]);
 
   // OpenAI API Key 저장
   const handleOpenaiSave = useCallback(async () => {
     if (!openaiKey.trim()) return;
     try {
-      const current = await invoke<Record<string, unknown>>("get_settings");
-      await invoke("update_settings", { settings: { ...current, openaiApiKey: openaiKey.trim() } });
+      await persistSettingsPatch({ openaiApiKey: openaiKey.trim() });
       setOpenaiKeySaved(true);
       setOpenaiKey("");
     } catch (e) {
       console.error("Failed to save OpenAI key:", e);
     }
-  }, [openaiKey]);
+  }, [openaiKey, persistSettingsPatch]);
 
   // OpenAI API Key 삭제
   const handleOpenaiRemove = useCallback(async () => {
     try {
-      const current = await invoke<Record<string, unknown>>("get_settings");
-      await invoke("update_settings", { settings: { ...current, openaiApiKey: null } });
+      await persistSettingsPatch({ openaiApiKey: null });
       setOpenaiKeySaved(false);
     } catch (e) {
       console.error("Failed to remove OpenAI key:", e);
     }
-  }, []);
+  }, [persistSettingsPatch]);
 
   // AI Provider 변경
-  const handleProviderChange = useCallback(async (provider: "claude" | "openai") => {
+  const handleProviderChange = useCallback(async (provider: AIProvider) => {
     setAiProvider(provider);
     try {
-      const current = await invoke<Record<string, unknown>>("get_settings");
-      await invoke("update_settings", { settings: { ...current, aiProvider: provider } });
+      await persistSettingsPatch({ aiProvider: provider });
     } catch (e) {
       console.error("Failed to update AI provider:", e);
     }
-  }, []);
+  }, [persistSettingsPatch]);
+
+  const handleModelChange = useCallback(async (modelId: string) => {
+    const nextModels = {
+      ...aiProviderModels,
+      [aiProvider]: modelId,
+    };
+    setAiProviderModels(nextModels);
+    try {
+      await persistSettingsPatch({ aiProviderModels: nextModels });
+    } catch (e) {
+      console.error("Failed to update AI model:", e);
+      setAiProviderModels(aiProviderModels);
+    }
+  }, [aiProvider, aiProviderModels, persistSettingsPatch]);
+
+  const handleReasoningChange = useCallback(async (reasoningId: string) => {
+    const providerEntry = aiProviderCatalog.find(provider => provider.id === aiProvider) ?? null;
+    const modelId = resolveSelectedModel(aiProvider, aiProviderModels, providerEntry);
+    if (!modelId) return;
+    const nextReasoning = { ...aiProviderReasoning };
+    const storageKey = reasoningStorageKey(aiProvider, modelId);
+    if (reasoningId) {
+      nextReasoning[storageKey] = reasoningId;
+    } else {
+      delete nextReasoning[storageKey];
+    }
+    setAiProviderReasoning(nextReasoning);
+    try {
+      await persistSettingsPatch({ aiProviderReasoning: nextReasoning });
+    } catch (e) {
+      console.error("Failed to update AI reasoning:", e);
+      setAiProviderReasoning(aiProviderReasoning);
+    }
+  }, [aiProvider, aiProviderCatalog, aiProviderModels, aiProviderReasoning, persistSettingsPatch]);
 
   // 색상 변경
   const handleColorChange = useCallback(async (color: CatColor) => {
@@ -312,6 +510,136 @@ export function Settings() {
   if (loading) {
     return <div className="settings"><div className="settings__loading">Loading...</div></div>;
   }
+
+  const selectedProvider = aiProviderCatalog.find(provider => provider.id === aiProvider) ?? aiProviderCatalog[0] ?? null;
+  const selectedModel = resolveSelectedModel(aiProvider, aiProviderModels, selectedProvider);
+  const selectedModelEntry = selectedProvider?.models.find(model => model.id === selectedModel);
+  const selectedReasoning = resolveSelectedReasoning(aiProvider, aiProviderReasoning, selectedModelEntry);
+  const codexStatusLabel = codexStatus.connected
+    ? "Connected"
+    : codexStatus.authenticated
+      ? "CLI Missing"
+      : codexStatus.available
+        ? "Not Connected"
+        : "Unavailable";
+
+  const renderProviderConfiguration = () => {
+    if (aiProvider === "claude") {
+      return (
+        <div className="settings__ai-key-section">
+          <div className="settings__ai-key-label">Anthropic API Key</div>
+          {aiKeySaved ? (
+            <div className="settings__github-status">
+              <span>Connected</span>
+              <button
+                className="settings__github-btn settings__github-btn--disconnect"
+                onClick={handleAiRemove}
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="settings__github-row">
+              <input
+                className="settings__github-input"
+                type="password"
+                placeholder="sk-ant-..."
+                value={aiKey}
+                onChange={e => setAiKey(e.target.value)}
+                disabled={aiSaving}
+                onKeyDown={e => e.key === "Enter" && handleAiSave()}
+              />
+              <button
+                className="settings__github-btn settings__github-btn--connect"
+                onClick={handleAiSave}
+                disabled={aiSaving || !aiKey.trim()}
+              >
+                {aiSaving ? "..." : "Save"}
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (aiProvider === "openai-api") {
+      return (
+        <div className="settings__ai-key-section">
+          <div className="settings__ai-key-label">OpenAI API Key</div>
+          {openaiKeySaved ? (
+            <div className="settings__github-status">
+              <span>Connected</span>
+              <button
+                className="settings__github-btn settings__github-btn--disconnect"
+                onClick={handleOpenaiRemove}
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="settings__github-row">
+              <input
+                className="settings__github-input"
+                type="password"
+                placeholder="sk-..."
+                value={openaiKey}
+                onChange={e => setOpenaiKey(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleOpenaiSave()}
+              />
+              <button
+                className="settings__github-btn settings__github-btn--connect"
+                onClick={handleOpenaiSave}
+                disabled={!openaiKey.trim()}
+              >
+                Save
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="settings__provider-card">
+        <div className="settings__provider-card-header">
+          <div>
+            <div className="settings__ai-key-label">Local Provider Status</div>
+            <div className={`settings__provider-status ${codexStatus.connected ? "settings__provider-status--connected" : ""}`}>
+              {codexStatusLabel}
+            </div>
+          </div>
+          <div className="settings__provider-card-actions">
+            <button
+              className="settings__github-btn settings__github-btn--disconnect"
+              onClick={refreshCodexStatus}
+              disabled={codexChecking}
+            >
+              {codexChecking ? "..." : "Refresh"}
+            </button>
+          </div>
+        </div>
+
+        <div className="settings__provider-note">
+          {codexStatus.statusMessage}
+        </div>
+
+        {!codexStatus.connected && (
+          <div className="settings__provider-steps">
+            <div className="settings__ai-key-label">Connection</div>
+            <p className="settings__provider-step">
+              1. Install the Codex CLI on this machine.
+            </p>
+            <p className="settings__provider-step">
+              2. Run <code>codex login</code> in your terminal and complete the ChatGPT OAuth flow.
+            </p>
+            <p className="settings__provider-step">
+              3. Return here and press Refresh.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="settings">
@@ -428,90 +756,78 @@ export function Settings() {
       <section className="settings__section">
         <h2 className="settings__section-title">AI</h2>
 
-        {/* AI Provider 선택 */}
         <div className="settings__provider-row">
-          <button
-            className={`settings__provider-btn ${aiProvider === "claude" ? "settings__provider-btn--active-claude" : ""}`}
-            onClick={() => handleProviderChange("claude")}
-          >
-            Claude
-          </button>
-          <button
-            className={`settings__provider-btn ${aiProvider === "openai" ? "settings__provider-btn--active-openai" : ""}`}
-            onClick={() => handleProviderChange("openai")}
-          >
-            OpenAI
-          </button>
-        </div>
-
-        {/* Claude API Key */}
-        <div className="settings__ai-key-section">
-          <div className="settings__ai-key-label">Anthropic API Key</div>
-          {aiKeySaved ? (
-            <div className="settings__github-status">
-              <span>Connected</span>
-              <button
-                className="settings__github-btn settings__github-btn--disconnect"
-                onClick={handleAiRemove}
+          <div className="settings__provider-field">
+            <label className="settings__ai-key-label" htmlFor="ai-provider-select">Provider</label>
+            <div className="settings__provider-select-wrap">
+              <select
+                id="ai-provider-select"
+                className="settings__provider-select"
+                value={aiProvider}
+                onChange={e => handleProviderChange(e.target.value as AIProvider)}
               >
-                Remove
-              </button>
+                {aiProviderCatalog.map(provider => (
+                  <option key={provider.id} value={provider.id}>
+                    {provider.label}
+                  </option>
+                ))}
+              </select>
+              <span className="settings__provider-caret">▾</span>
             </div>
-          ) : (
-            <div className="settings__github-row">
-              <input
-                className="settings__github-input"
-                type="password"
-                placeholder="sk-ant-..."
-                value={aiKey}
-                onChange={e => setAiKey(e.target.value)}
-                disabled={aiSaving}
-                onKeyDown={e => e.key === "Enter" && handleAiSave()}
-              />
-              <button
-                className="settings__github-btn settings__github-btn--connect"
-                onClick={handleAiSave}
-                disabled={aiSaving || !aiKey.trim()}
+          </div>
+          {selectedProvider && (
+            <div className="settings__provider-note">
+              {selectedProvider.description}
+            </div>
+          )}
+          <div className="settings__provider-field">
+            <label className="settings__ai-key-label" htmlFor="ai-model-select">Model</label>
+            <div className="settings__provider-select-wrap">
+              <select
+                id="ai-model-select"
+                className="settings__provider-select"
+                value={selectedModel}
+                onChange={e => handleModelChange(e.target.value)}
+                disabled={!selectedProvider}
               >
-                {aiSaving ? "..." : "Save"}
-              </button>
+                {selectedProvider?.models.map(model => (
+                  <option key={model.id} value={model.id}>
+                    {model.label}
+                  </option>
+                ))}
+              </select>
+              <span className="settings__provider-caret">▾</span>
+            </div>
+          </div>
+          {(selectedModelEntry?.reasoningEfforts?.length ?? 0) > 0 && (
+            <div className="settings__provider-field">
+              <label className="settings__ai-key-label" htmlFor="ai-reasoning-select">Reasoning</label>
+              <div className="settings__provider-select-wrap">
+                <select
+                  id="ai-reasoning-select"
+                  className="settings__provider-select"
+                  value={selectedReasoning}
+                  onChange={e => handleReasoningChange(e.target.value)}
+                >
+                  {selectedModelEntry?.defaultReasoning && (
+                    <option value="">
+                      {`(default) ${selectedModelEntry.defaultReasoning}`}
+                    </option>
+                  )}
+                  {selectedModelEntry?.reasoningEfforts
+                    ?.filter(option => option.id !== selectedModelEntry.defaultReasoning)
+                    .map(option => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="settings__provider-caret">▾</span>
+              </div>
             </div>
           )}
         </div>
-
-        {/* OpenAI API Key */}
-        <div className="settings__ai-key-section">
-          <div className="settings__ai-key-label">OpenAI API Key</div>
-          {openaiKeySaved ? (
-            <div className="settings__github-status">
-              <span>Connected</span>
-              <button
-                className="settings__github-btn settings__github-btn--disconnect"
-                onClick={handleOpenaiRemove}
-              >
-                Remove
-              </button>
-            </div>
-          ) : (
-            <div className="settings__github-row">
-              <input
-                className="settings__github-input"
-                type="password"
-                placeholder="sk-..."
-                value={openaiKey}
-                onChange={e => setOpenaiKey(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleOpenaiSave()}
-              />
-              <button
-                className="settings__github-btn settings__github-btn--connect"
-                onClick={handleOpenaiSave}
-                disabled={!openaiKey.trim()}
-              >
-                Save
-              </button>
-            </div>
-          )}
-        </div>
+        {renderProviderConfiguration()}
       </section>
 
       {/* Notifications */}

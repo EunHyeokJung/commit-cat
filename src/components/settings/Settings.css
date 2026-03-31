@@ -573,35 +573,111 @@
 
 .settings__provider-row {
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 14px;
 }
 
-.settings__provider-btn {
-  flex: 1;
-  padding: 6px 0;
-  border-radius: 8px;
+.settings__provider-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings__provider-select-wrap {
+  position: relative;
+}
+
+.settings__provider-select {
+  width: 100%;
+  appearance: none;
+  padding: 10px 36px 10px 12px;
+  border-radius: 10px;
   border: 1px solid #ddd;
-  background: #f5f5f5;
+  background: #f7f7f7;
+  color: #222;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.settings__provider-select:focus {
+  border-color: #d4a574;
+  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.18);
+  background: #fff;
+}
+
+.settings__provider-caret {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   color: #999;
   font-size: 12px;
-  font-weight: 400;
-  cursor: pointer;
-  transition: all 0.15s;
+  pointer-events: none;
 }
 
-.settings__provider-btn--active-claude {
-  background: #d4a574;
-  color: #1a1a2e;
-  font-weight: 700;
-  border-color: #d4a574;
+.settings__provider-note {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f6f1eb;
+  color: #7a5f49;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
-.settings__provider-btn--active-openai {
-  background: #74aa9c;
-  color: #1a1a2e;
+.settings__provider-card {
+  border: 1px solid #ece2d6;
+  border-radius: 12px;
+  background: #fcfaf7;
+  padding: 14px;
+}
+
+.settings__provider-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.settings__provider-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.settings__provider-status {
+  font-size: 13px;
   font-weight: 700;
-  border-color: #74aa9c;
+  color: #b45309;
+}
+
+.settings__provider-status--connected {
+  color: #16a34a;
+}
+
+.settings__provider-steps {
+  margin-top: 12px;
+}
+
+.settings__provider-step {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.45;
+}
+
+.settings__provider-link {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a5f49;
+  text-decoration: none;
+}
+
+.settings__provider-link:hover {
+  text-decoration: underline;
 }
 
 .settings__ai-key-section {
