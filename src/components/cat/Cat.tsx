@@ -24,6 +24,8 @@ async function notify(title: string, body: string) {
 
 const WIN_W = 200;
 const WIN_W_EXPANDED = 350;
+const DRAG_W = 250;
+const DRAG_H = 200;
 
 const normalMessages = ["hey there~ 😺", "what's up? 🐾", "hi hi~ 💛", "oh, hello! 😸", "noticed me? 👀"];
 const happyMessages = ["that feels nice~ 💛", "more more! 😻", "you're the best 🥰", "hehe~ 😸"];
@@ -256,6 +258,12 @@ export function Cat() {
   const isDraggingRef = useRef(false);
   const didDrag = useRef(false);
   const dragStartMouse = useRef({ x: 0, y: 0 });
+
+  // 드래그 중 다른 setSize 호출을 차단하는 안전한 래퍼
+  const safeSetSize = useCallback((w: number, h: number) => {
+    if (isDraggingRef.current) return; // 드래그 중엔 무시
+    appWindow.current.setSize(new LogicalSize(w, h)).catch(() => {});
+  }, []);
   const dragStartWin = useRef({ x: 0, y: 0 });
   const screenW = useRef(window.screen.width);
 
@@ -330,7 +338,7 @@ export function Cat() {
     const pos = await appWindow.current.outerPosition();
     const scale = await appWindow.current.scaleFactor();
     const shift = (WIN_W_EXPANDED - WIN_W) / 2;
-    await appWindow.current.setSize(new LogicalSize(WIN_W_EXPANDED, 150));
+    safeSetSize(WIN_W_EXPANDED, 150);
     await appWindow.current.setPosition(new LogicalPosition(
       Math.round(pos.x / scale - shift),
       Math.round(pos.y / scale)
@@ -345,7 +353,7 @@ export function Cat() {
       const pos = await appWindow.current.outerPosition();
       const scale = await appWindow.current.scaleFactor();
       const shift = (WIN_W_EXPANDED - WIN_W) / 2;
-      await appWindow.current.setSize(new LogicalSize(WIN_W, 150));
+      safeSetSize(WIN_W, 150);
       await appWindow.current.setPosition(new LogicalPosition(
         Math.round(pos.x / scale + shift),
         Math.round(pos.y / scale)
@@ -590,11 +598,11 @@ export function Cat() {
     setBubble(null);
     if (isAiBubble) {
       setIsAiBubble(false);
-      if (isDraggingRef.current) return; // 드래그 중이면 리사이즈 건너뜀
+      if (isDraggingRef.current) return;
       try {
         const pos = await appWindow.current.outerPosition();
         const scale = await appWindow.current.scaleFactor();
-        await appWindow.current.setSize(new LogicalSize(WIN_W, 150));
+        safeSetSize(WIN_W, 150);
         await appWindow.current.setPosition(new LogicalPosition(
           Math.round(pos.x / scale),
           Math.round(pos.y / scale + 150)
@@ -869,7 +877,7 @@ export function Cat() {
       showBubble("something went wrong... 😿", 2000);
       return;
     }
-    await appWindow.current.setSize(new LogicalSize(220, 180));
+    safeSetSize(220, 180);
     setChatOpen(true);
     setChatInput("");
     setTimeout(() => chatInputRef.current?.focus(), 100);
@@ -878,8 +886,8 @@ export function Cat() {
   const closeChat = useCallback(async () => {
     setChatOpen(false);
     setChatInput("");
-    await appWindow.current.setSize(new LogicalSize(WIN_W, 150));
-  }, []);
+    safeSetSize(WIN_W, 150);
+  }, [safeSetSize]);
 
   const sendChat = useCallback(async () => {
     const msg = chatInput.trim();
@@ -887,14 +895,14 @@ export function Cat() {
     setChatLoading(true);
     setChatOpen(false);
     setChatInput("");
-    await appWindow.current.setSize(new LogicalSize(WIN_W, 150));
+    safeSetSize(WIN_W, 150);
     showBubble("thinking... 🤔", 30000);
     try {
       const response = await invoke<string>("chat_with_cat", { message: msg });
       // AI 응답: 윈도우 넓히고, 클릭할 때까지 유지
       const pos = await appWindow.current.outerPosition();
       const scale = await appWindow.current.scaleFactor();
-      await appWindow.current.setSize(new LogicalSize(WIN_W_EXPANDED, 300));
+      safeSetSize(WIN_W_EXPANDED, 300);
       await appWindow.current.setPosition(new LogicalPosition(
         Math.round(pos.x / scale),
         Math.round(pos.y / scale - 150)
