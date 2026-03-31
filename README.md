@@ -192,7 +192,7 @@ npm run tauri dev
 - [x] Grab sprite system (color-specific drag animations)
 - [x] AI provider/model selection (Claude + OpenAI GPT)
 - [x] JetBrains plugin marketplace preparation
-- [ ] Cat design renewal
+- [x] Cat design renewal
 - [ ] Auto-equip items (birthday hat, commit streak crown, etc.)
 - [ ] JetBrains Extension marketplace release
 
