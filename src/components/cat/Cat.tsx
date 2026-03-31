@@ -164,6 +164,14 @@ function TimerDisplay({ showBubble }: { showBubble: (msg: string, duration?: num
 }
 
 // ══════════════════════════════════════
+// grab 이미지 프리로드 (컴포넌트 외부 — 최초 1회)
+// ══════════════════════════════════════
+["brown", "orange", "white"].forEach(color => {
+  const img = new Image();
+  img.src = `/assets/cat/${color}_grab.png`;
+});
+
+// ══════════════════════════════════════
 // 메인 고양이 컴포넌트
 // ══════════════════════════════════════
 export function Cat() {
@@ -526,13 +534,13 @@ export function Cat() {
   const [frame, setFrame] = useState(0);
 
   useEffect(() => {
-    if (behavior !== "walk") { setFrame(0); return; }
+    if (behavior !== "walk" || isDragging) { setFrame(0); return; }
 
     const id = setInterval(() => {
       setFrame(prev => (prev === 0 ? 1 : 0));
     }, 1000);
     return () => clearInterval(id);
-  }, [behavior]);
+  }, [behavior, isDragging]);
 
   // 이미지 경로 결정
   const getImageSrc = () => {
