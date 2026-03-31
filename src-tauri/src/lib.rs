@@ -221,6 +221,8 @@ pub fn run() {
             commands::xp::get_xp_status,
             commands::xp::add_xp,
             commands::xp::get_streak_info,
+            commands::xp::equip_hat,
+            commands::xp::get_hat_info,
             // GitHub
             commands::github::verify_github_token,
             commands::github::disconnect_github,

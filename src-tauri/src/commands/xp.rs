@@ -1,7 +1,7 @@
 use commit_cat_core::models::activity::ActivityEvent;
 use commit_cat_core::models::growth::{exp_for_level, LevelInfo};
 use crate::services::storage;
-use chrono::Local;
+use chrono::{Datelike, Local};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
@@ -147,6 +147,25 @@ pub async fn add_xp(app: AppHandle, amount: u32, source: String) -> Result<AddXp
         }
     }
 
+    // Check hat unlocks
+    let month = Local::now().month();
+    let newly_unlocked = commit_cat_core::items::check_unlocks(
+        data.cat.level,
+        data.cat.total_commits,
+        data.cat.streak_days,
+        data.cat.total_late_night_sessions,
+        month,
+        &data.cat.unlocked_hats,
+    );
+    for hat in &newly_unlocked {
+        if !data.cat.unlocked_hats.contains(hat) {
+            data.cat.unlocked_hats.push(hat.clone());
+        }
+    }
+    if !newly_unlocked.is_empty() {
+        let _ = app.emit("hat:unlocked", &newly_unlocked);
+    }
+
     let result = AddXpResult {
         level: data.cat.level,
         current_exp: data.cat.exp,
@@ -175,4 +194,21 @@ pub async fn add_xp(app: AppHandle, amount: u32, source: String) -> Result<AddXp
     }
 
     Ok(result)
+}
+
+#[tauri::command]
+pub async fn equip_hat(app: AppHandle, hat_id: Option<String>) -> Result<(), String> {
+    let mut data = storage::load(&app)?;
+    data.cat.current_hat = hat_id;
+    storage::save(&app, &data)?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_hat_info(app: AppHandle) -> Result<serde_json::Value, String> {
+    let data = storage::load(&app)?;
+    Ok(serde_json::json!({
+        "currentHat": data.cat.current_hat,
+        "unlockedHats": data.cat.unlocked_hats,
+    }))
 }

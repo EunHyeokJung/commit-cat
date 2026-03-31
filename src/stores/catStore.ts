@@ -61,6 +61,10 @@ interface CatStore {
   breakActive: boolean;
   breakSeconds: number;
 
+  // Hats
+  currentHat: string | null;
+  unlockedHats: string[];
+
   // Sub cats
   subCats: SubCat[];
 
@@ -90,6 +94,8 @@ interface CatStore {
   startBreak: (totalSeconds: number) => void;
   stopBreak: () => void;
   tickBreak: () => void;
+  setCurrentHat: (hat: string | null) => void;
+  addUnlockedHat: (hat: string) => void;
 }
 
 const moodFromState = (state: CatState): CatMood => {
@@ -114,6 +120,9 @@ export const useCatStore = create<CatStore>((set) => ({
   expToNext: 100,
   streakDays: 0,
   catColor: "brown",
+
+  currentHat: null,
+  unlockedHats: [],
 
   subCats: [],
 
@@ -236,4 +245,9 @@ export const useCatStore = create<CatStore>((set) => ({
       if (!s.breakActive || s.breakSeconds <= 0) return {};
       return { breakSeconds: s.breakSeconds - 1 };
     }),
+
+  setCurrentHat: (hat) => set({ currentHat: hat }),
+  addUnlockedHat: (hat) => set((s) => ({
+    unlockedHats: s.unlockedHats.includes(hat) ? s.unlockedHats : [...s.unlockedHats, hat],
+  })),
 }));

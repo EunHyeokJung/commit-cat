@@ -150,6 +150,15 @@ pub struct CatPersistence {
     pub total_commits: u32,
     pub streak_days: u32,
     pub last_active_date: Option<String>,
+    /// 현재 장착 모자
+    #[serde(default)]
+    pub current_hat: Option<String>,
+    /// 해금된 모자 목록
+    #[serde(default)]
+    pub unlocked_hats: Vec<String>,
+    /// 심야 코딩 세션 횟수 (누적)
+    #[serde(default)]
+    pub total_late_night_sessions: u32,
 }
 
 impl Default for CatPersistence {
@@ -161,6 +170,9 @@ impl Default for CatPersistence {
             total_commits: 0,
             streak_days: 0,
             last_active_date: None,
+            current_hat: None,
+            unlocked_hats: Vec::new(),
+            total_late_night_sessions: 0,
         }
     }
 }
