@@ -59,6 +59,7 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
   user-select: none;
   -webkit-user-drag: none;
+  transition: height 0.15s ease-out, transform 0.15s ease-out;
 }
 
 /* 색상별 크기 — 모든 상태에서 동일 높이 (전환 시 축소 방지) */
