@@ -721,9 +721,11 @@ export function Cat() {
   // ══════════════════════════════════════
   // 드래그
   // ══════════════════════════════════════
+  const DRAG_THRESHOLD = 5; // px — 이 이상 이동해야 드래그 시작
+  const pendingDragRef = useRef(false); // mousedown 했지만 아직 드래그 아닌 상태
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 2) {
-      // 우클릭: petting 추적 시작
       isPettingRef.current = true;
       petLastX.current = e.screenX;
       petScore.current = 0;
@@ -733,30 +735,49 @@ export function Cat() {
       return;
     }
     if (e.button !== 0) return;
-    isDraggingRef.current = true;
-    ignoreRef.current = false;
-    setIsDragging(true);
-    setBubble(null); // 드래그 시작 시 말풍선 제거
-    appWindow.current.setIgnoreCursorEvents(false).catch(() => {});
-    appWindow.current.setSize(new LogicalSize(250, 200)).catch(() => {});
+    // 즉시 드래그 시작하지 않음 — threshold 이후 전환
+    pendingDragRef.current = true;
     didDrag.current = false;
     dragStartMouse.current = { x: e.screenX, y: e.screenY };
     dragStartWin.current = { ...winPosRef.current };
+    ignoreRef.current = false;
+    appWindow.current.setIgnoreCursorEvents(false).catch(() => {});
   }, []);
 
+  // 드래그 감지: mousedown 후 mousemove에서 threshold 초과 시 드래그 진입
   useEffect(() => {
-    if (!isDragging) return;
     const handleMove = (e: MouseEvent) => {
-      didDrag.current = true;
+      if (isDragging) {
+        // 이미 드래그 중 — 윈도우 이동
+        const dx = e.screenX - dragStartMouse.current.x;
+        const dy = e.screenY - dragStartMouse.current.y;
+        moveWindow(dragStartWin.current.x + dx, dragStartWin.current.y + dy);
+        return;
+      }
+      if (!pendingDragRef.current) return;
+      // threshold 체크
       const dx = e.screenX - dragStartMouse.current.x;
       const dy = e.screenY - dragStartMouse.current.y;
-      moveWindow(dragStartWin.current.x + dx, dragStartWin.current.y + dy);
+      if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
+      // 드래그 진입!
+      pendingDragRef.current = false;
+      isDraggingRef.current = true;
+      didDrag.current = true;
+      setIsDragging(true);
+      setBubble(null);
+      appWindow.current.setSize(new LogicalSize(DRAG_W, DRAG_H)).catch(() => {});
     };
     const handleUp = () => {
+      if (pendingDragRef.current) {
+        // threshold 미달 — 그냥 클릭이었음
+        pendingDragRef.current = false;
+        return;
+      }
+      if (!isDraggingRef.current) return;
       setIsDragging(false);
       isDraggingRef.current = false;
       appWindow.current.setSize(new LogicalSize(WIN_W, 150)).catch(() => {});
-      if (didDrag.current) showBubble("wheee~! 🎢", 1500);
+      showBubble("wheee~! 🎢", 1500);
     };
     window.addEventListener("mousemove", handleMove);
     window.addEventListener("mouseup", handleUp);
