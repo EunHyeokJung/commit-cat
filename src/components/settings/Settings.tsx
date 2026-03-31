@@ -35,6 +35,9 @@ export function Settings() {
   const [aiKey, setAiKey] = useState("");
   const [aiKeySaved, setAiKeySaved] = useState(false);
   const [aiSaving, setAiSaving] = useState(false);
+  const [openaiKey, setOpenaiKey] = useState("");
+  const [openaiKeySaved, setOpenaiKeySaved] = useState(false);
+  const [aiProvider, setAiProvider] = useState<"claude" | "openai">("claude");
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -42,7 +45,7 @@ export function Settings() {
       try {
         const [repoList, settings, xpStatus] = await Promise.all([
           invoke<string[]>("get_watched_repos"),
-          invoke<{ catColor?: CatColor; pomodoroMinutes?: number; breakMinutes?: number; githubUsername?: string | null; notificationsEnabled?: boolean; anthropicApiKey?: string | null; subCatsEnabled?: boolean }>("get_settings"),
+          invoke<{ catColor?: CatColor; pomodoroMinutes?: number; breakMinutes?: number; githubUsername?: string | null; notificationsEnabled?: boolean; anthropicApiKey?: string | null; openaiApiKey?: string | null; aiProvider?: string; subCatsEnabled?: boolean }>("get_settings"),
           invoke<XpStatus>("get_xp_status"),
         ]);
         setRepos(repoList);
@@ -53,6 +56,8 @@ export function Settings() {
         if (settings.notificationsEnabled !== undefined) setNotificationsEnabled(settings.notificationsEnabled);
         if (settings.subCatsEnabled !== undefined) setSubCatsEnabled(settings.subCatsEnabled);
         if (settings.anthropicApiKey) setAiKeySaved(true);
+        if (settings.openaiApiKey) setOpenaiKeySaved(true);
+        if (settings.aiProvider) setAiProvider(settings.aiProvider as "claude" | "openai");
         setXp(xpStatus);
       } catch (e) {
         console.error("Failed to load settings:", e);
@@ -252,6 +257,41 @@ export function Settings() {
     }
   }, []);
 
+  // OpenAI API Key 저장
+  const handleOpenaiSave = useCallback(async () => {
+    if (!openaiKey.trim()) return;
+    try {
+      const current = await invoke<Record<string, unknown>>("get_settings");
+      await invoke("update_settings", { settings: { ...current, openaiApiKey: openaiKey.trim() } });
+      setOpenaiKeySaved(true);
+      setOpenaiKey("");
+    } catch (e) {
+      console.error("Failed to save OpenAI key:", e);
+    }
+  }, [openaiKey]);
+
+  // OpenAI API Key 삭제
+  const handleOpenaiRemove = useCallback(async () => {
+    try {
+      const current = await invoke<Record<string, unknown>>("get_settings");
+      await invoke("update_settings", { settings: { ...current, openaiApiKey: null } });
+      setOpenaiKeySaved(false);
+    } catch (e) {
+      console.error("Failed to remove OpenAI key:", e);
+    }
+  }, []);
+
+  // AI Provider 변경
+  const handleProviderChange = useCallback(async (provider: "claude" | "openai") => {
+    setAiProvider(provider);
+    try {
+      const current = await invoke<Record<string, unknown>>("get_settings");
+      await invoke("update_settings", { settings: { ...current, aiProvider: provider } });
+    } catch (e) {
+      console.error("Failed to update AI provider:", e);
+    }
+  }, []);
+
   // 색상 변경
   const handleColorChange = useCallback(async (color: CatColor) => {
     setCatColor(color);
@@ -388,36 +428,91 @@ export function Settings() {
       {/* AI */}
       <section className="settings__section">
         <h2 className="settings__section-title">AI</h2>
-        {aiKeySaved ? (
-          <div className="settings__github-status">
-            <span>Anthropic API key saved</span>
-            <button
-              className="settings__github-btn settings__github-btn--disconnect"
-              onClick={handleAiRemove}
-            >
-              Remove
-            </button>
-          </div>
-        ) : (
-          <div className="settings__github-row">
-            <input
-              className="settings__github-input"
-              type="password"
-              placeholder="Anthropic API Key"
-              value={aiKey}
-              onChange={e => setAiKey(e.target.value)}
-              disabled={aiSaving}
-              onKeyDown={e => e.key === "Enter" && handleAiSave()}
-            />
-            <button
-              className="settings__github-btn settings__github-btn--connect"
-              onClick={handleAiSave}
-              disabled={aiSaving || !aiKey.trim()}
-            >
-              {aiSaving ? "..." : "Save"}
-            </button>
-          </div>
-        )}
+
+        {/* AI Provider 선택 */}
+        <div className="settings__provider-row">
+          <button
+            className={`settings__provider-btn ${aiProvider === "claude" ? "settings__provider-btn--active-claude" : ""}`}
+            onClick={() => handleProviderChange("claude")}
+          >
+            Claude
+          </button>
+          <button
+            className={`settings__provider-btn ${aiProvider === "openai" ? "settings__provider-btn--active-openai" : ""}`}
+            onClick={() => handleProviderChange("openai")}
+          >
+            OpenAI
+          </button>
+        </div>
+
+        {/* Claude API Key */}
+        <div className="settings__ai-key-section">
+          <div className="settings__ai-key-label">Anthropic API Key</div>
+          {aiKeySaved ? (
+            <div className="settings__github-status">
+              <span>Connected</span>
+              <button
+                className="settings__github-btn settings__github-btn--disconnect"
+                onClick={handleAiRemove}
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="settings__github-row">
+              <input
+                className="settings__github-input"
+                type="password"
+                placeholder="sk-ant-..."
+                value={aiKey}
+                onChange={e => setAiKey(e.target.value)}
+                disabled={aiSaving}
+                onKeyDown={e => e.key === "Enter" && handleAiSave()}
+              />
+              <button
+                className="settings__github-btn settings__github-btn--connect"
+                onClick={handleAiSave}
+                disabled={aiSaving || !aiKey.trim()}
+              >
+                {aiSaving ? "..." : "Save"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* OpenAI API Key */}
+        <div className="settings__ai-key-section">
+          <div className="settings__ai-key-label">OpenAI API Key</div>
+          {openaiKeySaved ? (
+            <div className="settings__github-status">
+              <span>Connected</span>
+              <button
+                className="settings__github-btn settings__github-btn--disconnect"
+                onClick={handleOpenaiRemove}
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="settings__github-row">
+              <input
+                className="settings__github-input"
+                type="password"
+                placeholder="sk-..."
+                value={openaiKey}
+                onChange={e => setOpenaiKey(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleOpenaiSave()}
+              />
+              <button
+                className="settings__github-btn settings__github-btn--connect"
+                onClick={handleOpenaiSave}
+                disabled={!openaiKey.trim()}
+              >
+                Save
+              </button>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Notifications */}

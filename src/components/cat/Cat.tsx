@@ -815,8 +815,10 @@ export function Cat() {
   const openChat = useCallback(async () => {
     if (chatOpen || chatLoading) return;
     try {
-      const settings = await invoke<{ anthropicApiKey?: string | null }>("get_settings");
-      if (!settings.anthropicApiKey) {
+      const settings = await invoke<{ anthropicApiKey?: string | null; openaiApiKey?: string | null; aiProvider?: string }>("get_settings");
+      const provider = settings.aiProvider || "claude";
+      const hasKey = provider === "openai" ? !!settings.openaiApiKey : !!settings.anthropicApiKey;
+      if (!hasKey) {
         showBubble("set API key in settings first 🔑", 3000);
         return;
       }

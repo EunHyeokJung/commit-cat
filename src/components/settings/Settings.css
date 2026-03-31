@@ -568,3 +568,48 @@
   color: #e55;
   margin-top: 8px;
 }
+
+/* ── AI Provider ── */
+
+.settings__provider-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.settings__provider-btn {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #f5f5f5;
+  color: #999;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.settings__provider-btn--active-claude {
+  background: #d4a574;
+  color: #1a1a2e;
+  font-weight: 700;
+  border-color: #d4a574;
+}
+
+.settings__provider-btn--active-openai {
+  background: #74aa9c;
+  color: #1a1a2e;
+  font-weight: 700;
+  border-color: #74aa9c;
+}
+
+.settings__ai-key-section {
+  margin-bottom: 12px;
+}
+
+.settings__ai-key-label {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+}

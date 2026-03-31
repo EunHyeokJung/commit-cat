@@ -42,6 +42,12 @@ pub struct AppSettings {
     /// Anthropic API key (AI 채팅)
     #[serde(default)]
     pub anthropic_api_key: Option<String>,
+    /// OpenAI API key (AI 채팅)
+    #[serde(default)]
+    pub openai_api_key: Option<String>,
+    /// AI provider: "claude" or "openai" (default: "claude")
+    #[serde(default = "default_ai_provider")]
+    pub ai_provider: String,
     /// 서브 고양이 표시
     #[serde(default = "default_true")]
     pub sub_cats_enabled: bool,
@@ -49,6 +55,7 @@ pub struct AppSettings {
 
 fn default_break_minutes() -> u32 { 5 }
 fn default_true() -> bool { true }
+fn default_ai_provider() -> String { "claude".to_string() }
 
 impl Default for AppSettings {
     fn default() -> Self {
@@ -69,6 +76,8 @@ impl Default for AppSettings {
             github_token: None,
             github_username: None,
             anthropic_api_key: None,
+            openai_api_key: None,
+            ai_provider: default_ai_provider(),
             sub_cats_enabled: true,
         }
     }
