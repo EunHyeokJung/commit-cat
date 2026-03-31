@@ -1,8 +1,11 @@
 use crate::models::ai_provider_catalog::{
-    get_ai_provider_catalog_response, normalize_provider_owned, resolve_model, resolve_reasoning,
-    AiProviderCatalogResponse,
+    get_ai_provider_catalog as build_ai_provider_catalog, get_ai_provider_catalog_response,
 };
 use crate::services::storage;
+use commit_cat_core::models::ai_provider_catalog::{
+    normalize_provider_owned, resolve_model_with_catalog, resolve_reasoning_with_catalog,
+    AiProviderCatalogResponse,
+};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
@@ -75,8 +78,14 @@ pub fn get_ai_provider_catalog() -> Result<AiProviderCatalogResponse, String> {
 pub async fn chat_with_cat(app: AppHandle, message: String) -> Result<String, String> {
     let data = storage::load(&app)?;
     let provider = normalize_provider_owned(&data.settings.ai_provider);
-    let model = resolve_model(&provider, &data.settings.ai_provider_models);
-    let reasoning = resolve_reasoning(&provider, &model, &data.settings.ai_provider_reasoning);
+    let catalog = build_ai_provider_catalog();
+    let model = resolve_model_with_catalog(&provider, &data.settings.ai_provider_models, &catalog);
+    let reasoning = resolve_reasoning_with_catalog(
+        &provider,
+        &model,
+        &data.settings.ai_provider_reasoning,
+        &catalog,
+    );
 
     // Build system prompt (shared)
     let today = &data.today;

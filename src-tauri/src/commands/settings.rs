@@ -1,7 +1,8 @@
-use crate::models::ai_provider_catalog::{
-    normalize_provider_models, normalize_provider_owned, normalize_provider_reasoning,
-};
+use crate::models::ai_provider_catalog::get_ai_provider_catalog;
 use crate::services;
+use commit_cat_core::models::ai_provider_catalog::{
+    normalize_provider_models, normalize_provider_owned, normalize_provider_reasoning_with_catalog,
+};
 use commit_cat_core::models::settings::AppSettings;
 use serde_json::{Map, Value};
 
@@ -52,10 +53,12 @@ pub async fn update_settings_patch(
 }
 
 fn normalize_settings(settings: &mut AppSettings) {
+    let catalog = get_ai_provider_catalog();
     settings.ai_provider = normalize_provider_owned(&settings.ai_provider);
     normalize_provider_models(&mut settings.ai_provider_models);
-    normalize_provider_reasoning(
+    normalize_provider_reasoning_with_catalog(
         &mut settings.ai_provider_reasoning,
         &settings.ai_provider_models,
+        &catalog,
     );
 }

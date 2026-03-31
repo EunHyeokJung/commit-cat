@@ -73,10 +73,6 @@ function normalizeAiProviderModels(value?: Record<string, string> | null): Recor
   return next;
 }
 
-function normalizeAiProviderReasoning(value?: Record<string, string> | null): Record<string, string> {
-  return { ...(value ?? {}) };
-}
-
 function reasoningStorageKey(providerId: AIProvider, modelId: string): string {
   return `${providerId}::${modelId}`;
 }
@@ -129,10 +125,16 @@ function resolveSelectedReasoning(
   if (options.length === 0) return "";
   const selectedReasoning = providerReasoning[reasoningStorageKey(providerId, model?.id ?? "")];
   if (!selectedReasoning || selectedReasoning === model?.defaultReasoning) {
-    return "";
+    if (model?.defaultReasoning) {
+      return "";
+    }
+    return options[0]?.id ?? "";
   }
   if (selectedReasoning && options.some(option => option.id === selectedReasoning)) {
     return selectedReasoning;
+  }
+  if (!model?.defaultReasoning) {
+    return options[0]?.id ?? "";
   }
   return "";
 }
@@ -221,7 +223,7 @@ export function Settings() {
         const normalizedProvider = normalizeAiProvider(settings.aiProvider);
         const normalizedModels = normalizeAiProviderModels(settings.aiProviderModels);
         const normalizedReasoning = migrateLegacyReasoningMap(
-          normalizeAiProviderReasoning(settings.aiProviderReasoning),
+          { ...(settings.aiProviderReasoning ?? {}) },
           normalizedModels,
           catalog.providers,
         );
@@ -807,11 +809,11 @@ export function Settings() {
                   value={selectedReasoning}
                   onChange={e => handleReasoningChange(e.target.value)}
                 >
-                  <option value="">
-                    {selectedModelEntry?.defaultReasoning
-                      ? `(default) ${selectedModelEntry.defaultReasoning}`
-                      : "Default"}
-                  </option>
+                  {selectedModelEntry?.defaultReasoning && (
+                    <option value="">
+                      {`(default) ${selectedModelEntry.defaultReasoning}`}
+                    </option>
+                  )}
                   {selectedModelEntry?.reasoningEfforts
                     ?.filter(option => option.id !== selectedModelEntry.defaultReasoning)
                     .map(option => (
