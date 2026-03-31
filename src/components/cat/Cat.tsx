@@ -720,6 +720,7 @@ export function Cat() {
     isDraggingRef.current = true;
     ignoreRef.current = false;
     setIsDragging(true);
+    setBubble(null); // 드래그 시작 시 말풍선 제거
     appWindow.current.setIgnoreCursorEvents(false).catch(() => {});
     appWindow.current.setSize(new LogicalSize(250, 200)).catch(() => {});
     didDrag.current = false;

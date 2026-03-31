@@ -97,7 +97,7 @@
 .cat__image--grab {
   height: 130px !important;
   width: auto !important;
-  transform: translateY(15px) !important;
+  transform: translateY(5px) !important;
 }
 
 /* petting 이미지 (누워있는 가로형 포즈) */
