@@ -276,6 +276,22 @@ export function Cat() {
   const petLastChangeTime = useRef(0);
   const [showPettingImg, setShowPettingImg] = useState(false);
 
+  // ── 모자 ──
+  const [currentHat, setCurrentHat] = useState<string | null>(null);
+
+  useEffect(() => {
+    invoke<{ currentHat: string | null; unlockedHats: string[] }>("get_hat_info")
+      .then(info => setCurrentHat(info.currentHat))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const unlisten = listen("hat:equipped", (event) => {
+      setCurrentHat(event.payload as string | null);
+    });
+    return () => { unlisten.then(fn => fn()); };
+  }, []);
+
   // ── AI 채팅 ──
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
@@ -594,6 +610,14 @@ export function Cat() {
       setBubble(null);
     }, duration);
   }, []);
+
+  // ── 모자 잠금해제 알림 ──
+  useEffect(() => {
+    const unlisten = listen("hat:unlocked", () => {
+      showBubble("new item unlocked! \uD83C\uDF89", 3000);
+    });
+    return () => { unlisten.then(fn => fn()); };
+  }, [showBubble]);
 
   // ── 감정 변경 시 말풍선 표시 ──
   useEffect(() => {
@@ -943,6 +967,23 @@ export function Cat() {
             alt="cat"
             draggable={false}
           />
+          {currentHat && (
+            <img
+              src={`/assets/item/${currentHat}.png`}
+              alt="hat"
+              style={{
+                position: "absolute",
+                width: 40,
+                height: 40,
+                top: behavior === "sleep" ? 0 : behavior === "sit" ? -10 : catState === "celebrating" ? -25 : -20,
+                left: "50%",
+                transform: "translateX(-50%)",
+                pointerEvents: "none",
+                imageRendering: "pixelated",
+                zIndex: 10,
+              }}
+            />
+          )}
         </div>
         {(behavior === "sleep" || catState === "sleeping") && <div className="cat__zzz" style={direction === "right" ? { left: "auto", right: "5px" } : undefined}>z z z</div>}
         {showLevelUp && (

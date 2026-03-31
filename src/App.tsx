@@ -345,6 +345,16 @@ function App() {
   }, [setState, setActiveIde, setIdleSeconds, addCodingMinute, setLevel, triggerLevelUp,
       setEmotion, clearEmotion, incrementCommitStreak, resetCommitStreak, incrementBuildFails, resetBuildFails]);
 
+  // 모자 잠금해제 이벤트
+  useEffect(() => {
+    const unlisten = listen<string[]>("hat:unlocked", (event) => {
+      const hats = event.payload;
+      const store = useCatStore.getState();
+      hats.forEach(hat => store.addUnlockedHat(hat));
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, []);
+
   // 레벨업 시 서브 고양이 동기화
   useEffect(() => {
     const unlisten = listen<number>("xp:level-up", async () => {

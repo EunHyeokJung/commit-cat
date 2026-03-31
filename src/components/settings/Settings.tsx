@@ -139,6 +139,17 @@ function resolveSelectedReasoning(
   return "";
 }
 
+const HAT_DEFINITIONS = [
+  { id: "party_hat", name: "Party Hat", image: "/assets/item/party_hat.png", condition: "First commit ever" },
+  { id: "wizard", name: "Wizard Hat", image: "/assets/item/wizard.png", condition: "Reach level 5" },
+  { id: "crown", name: "Crown", image: "/assets/item/crown.png", condition: "Reach level 10" },
+  { id: "tophat", name: "Top Hat", image: "/assets/item/tophat.png", condition: "7-day streak" },
+  { id: "santahat", name: "Santa Hat", image: "/assets/item/santahat.png", condition: "Code in December" },
+  { id: "sunglass", name: "Sunglasses", image: "/assets/item/sunglass.png", condition: "10 late-night sessions" },
+  { id: "tuna", name: "Tuna", image: "/assets/item/tuna.png", condition: "50 total commits" },
+  { id: "cornhead", name: "Corn Head", image: "/assets/item/cornhead.png", condition: "30-day streak" },
+];
+
 export function Settings() {
   const [repos, setRepos] = useState<string[]>([]);
   const [catColor, setCatColor] = useState<CatColor>("brown");
@@ -175,6 +186,8 @@ export function Settings() {
     statusMessage: "Checking local Codex provider...",
   });
   const [codexChecking, setCodexChecking] = useState(false);
+  const [currentHat, setCurrentHat] = useState<string | null>(null);
+  const [unlockedHats, setUnlockedHats] = useState<string[]>([]);
 
   const refreshCodexStatus = useCallback(async () => {
     setCodexChecking(true);
@@ -232,6 +245,14 @@ export function Settings() {
         setAiProviderReasoning(normalizedReasoning);
         setAiProviderCatalog(catalog.providers);
         setXp(xpStatus);
+
+        // Load hat info
+        invoke<{ currentHat: string | null; unlockedHats: string[] }>("get_hat_info")
+          .then(info => {
+            setCurrentHat(info.currentHat);
+            setUnlockedHats(info.unlockedHats);
+          })
+          .catch(() => {});
       } catch (e) {
         console.error("Failed to load settings:", e);
       } finally {
@@ -490,6 +511,18 @@ export function Settings() {
     }
   }, [aiProvider, aiProviderCatalog, aiProviderModels, aiProviderReasoning, persistSettingsPatch]);
 
+  // 모자 장착/해제
+  const handleHatToggle = useCallback(async (hatId: string) => {
+    const newHat = currentHat === hatId ? null : hatId;
+    setCurrentHat(newHat);
+    try {
+      await invoke("equip_hat", { hatId: newHat });
+      await emit("hat:equipped", newHat);
+    } catch (e) {
+      console.error("Failed to equip hat:", e);
+    }
+  }, [currentHat]);
+
   // 색상 변경
   const handleColorChange = useCallback(async (color: CatColor) => {
     setCatColor(color);
@@ -727,6 +760,51 @@ export function Settings() {
             <button className="settings__stepper-btn" onClick={() => handleCompanionsChange(maxCompanions - 1)}>-</button>
             <span className="settings__stepper-value">{maxCompanions}</span>
             <button className="settings__stepper-btn" onClick={() => handleCompanionsChange(maxCompanions + 1)}>+</button>
+          </div>
+        </div>
+        {/* Inventory */}
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>Inventory</div>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: 6,
+          }}>
+            {HAT_DEFINITIONS.map(hat => {
+              const unlocked = unlockedHats.includes(hat.id);
+              const equipped = currentHat === hat.id;
+              return (
+                <button
+                  key={hat.id}
+                  onClick={() => unlocked && handleHatToggle(hat.id)}
+                  title={unlocked ? `${hat.name}${equipped ? " (equipped)" : ""}` : `\uD83D\uDD12 ${hat.condition}`}
+                  style={{
+                    width: "100%",
+                    aspectRatio: "1",
+                    borderRadius: 8,
+                    border: equipped ? "2px solid #ffd700" : "2px solid transparent",
+                    background: unlocked ? "#2a2a3a" : "#1a1a2e",
+                    cursor: unlocked ? "pointer" : "default",
+                    padding: 4,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: unlocked ? 1 : 0.4,
+                    position: "relative",
+                  }}
+                >
+                  {unlocked ? (
+                    <img
+                      src={hat.image}
+                      alt={hat.name}
+                      style={{ width: "80%", height: "80%", objectFit: "contain", imageRendering: "pixelated" }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: 16 }}>{"\uD83D\uDD12"}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
