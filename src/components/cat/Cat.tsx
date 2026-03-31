@@ -769,15 +769,18 @@ export function Cat() {
     };
     const handleUp = () => {
       if (pendingDragRef.current) {
-        // threshold 미달 — 그냥 클릭이었음
         pendingDragRef.current = false;
         return;
       }
       if (!isDraggingRef.current) return;
-      setIsDragging(false);
       isDraggingRef.current = false;
-      appWindow.current.setSize(new LogicalSize(WIN_W, 150)).catch(() => {});
-      showBubble("wheee~! 🎢", 1500);
+      // 윈도우 축소 → 이미지 전환 순서 보장
+      appWindow.current.setSize(new LogicalSize(WIN_W, 150)).then(() => {
+        setIsDragging(false);
+        showBubble("wheee~! 🎢", 1500);
+      }).catch(() => {
+        setIsDragging(false);
+      });
     };
     window.addEventListener("mousemove", handleMove);
     window.addEventListener("mouseup", handleUp);
