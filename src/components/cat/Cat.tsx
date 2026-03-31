@@ -963,7 +963,7 @@ export function Cat() {
           style={{ transform: isFlipped ? "scaleX(-1)" : "scaleX(1)" }}
         >
           <img
-            className={`cat__image cat__image--${catColor} ${showPettingImg ? "cat__image--petting" : ""} ${behavior === "walk" && frame === 1 ? "cat__image--walk" : ""} ${behavior === "sit" ? "cat__image--sit" : ""} ${behavior === "sleep" ? "cat__image--sleep" : ""}`}
+            className={`cat__image cat__image--${catColor} ${isDragging ? "cat__image--grab" : ""} ${showPettingImg ? "cat__image--petting" : ""} ${behavior === "walk" && frame === 1 ? "cat__image--walk" : ""} ${behavior === "sit" ? "cat__image--sit" : ""} ${behavior === "sleep" ? "cat__image--sleep" : ""}`}
             src={imageSrc}
             alt="cat"
             draggable={false}
