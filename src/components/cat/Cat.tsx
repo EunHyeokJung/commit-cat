@@ -1046,7 +1046,7 @@ export function Cat() {
             );
           })()}
         </div>
-        {(behavior === "sleep" || catState === "sleeping") && <div className="cat__zzz" style={direction === "right" ? { left: "auto", right: "5px" } : undefined}>z z z</div>}
+        {(behavior === "sleep" || catState === "sleeping") && !isDragging && <div className="cat__zzz" style={direction === "right" ? { left: "auto", right: "5px" } : undefined}>z z z</div>}
         {showLevelUp && (
           <div className={`cat__level-particles cat__level-particles--${catColor}`}>
             {Array.from({ length: 8 }, (_, i) => (
