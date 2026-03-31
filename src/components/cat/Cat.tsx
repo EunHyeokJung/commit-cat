@@ -968,23 +968,39 @@ export function Cat() {
             alt="cat"
             draggable={false}
           />
-          {currentHat && (
-            <img
-              src={`/assets/item/${currentHat}.png`}
-              alt="hat"
-              style={{
-                position: "absolute",
-                width: 40,
-                height: 40,
-                top: behavior === "sleep" ? 0 : behavior === "sit" ? -10 : catState === "celebrating" ? -25 : -20,
-                left: "50%",
-                transform: "translateX(-50%)",
-                pointerEvents: "none",
-                imageRendering: "pixelated",
-                zIndex: 10,
-              }}
-            />
-          )}
+          {currentHat && (() => {
+            // 아이템별 위치/크기 오프셋
+            const hatConfig: Record<string, { size: number; topOffset: number; leftOffset: number }> = {
+              party_hat:  { size: 28, topOffset: -22, leftOffset: 0 },
+              wizard:     { size: 32, topOffset: -24, leftOffset: 0 },
+              crown:      { size: 26, topOffset: -16, leftOffset: 0 },
+              tophat:     { size: 26, topOffset: -22, leftOffset: 0 },
+              santahat:   { size: 30, topOffset: -20, leftOffset: 2 },
+              sunglass:   { size: 24, topOffset: -2,  leftOffset: 0 },
+              tuna:       { size: 26, topOffset: -18, leftOffset: 0 },
+              cornhead:   { size: 28, topOffset: -20, leftOffset: 0 },
+            };
+            const cfg = hatConfig[currentHat] ?? { size: 28, topOffset: -20, leftOffset: 0 };
+            // 행동별 Y 보정
+            const stateYOffset = behavior === "sleep" ? 18 : behavior === "sit" ? 8 : isDragging ? 5 : catState === "celebrating" ? -5 : 0;
+            return (
+              <img
+                src={`/assets/item/${currentHat}.png`}
+                alt="hat"
+                style={{
+                  position: "absolute",
+                  width: cfg.size,
+                  height: cfg.size,
+                  top: cfg.topOffset + stateYOffset,
+                  left: `calc(50% + ${cfg.leftOffset}px)`,
+                  transform: "translateX(-50%)",
+                  pointerEvents: "none",
+                  imageRendering: "pixelated",
+                  zIndex: 10,
+                }}
+              />
+            );
+          })()}
         </div>
         {(behavior === "sleep" || catState === "sleeping") && <div className="cat__zzz" style={direction === "right" ? { left: "auto", right: "5px" } : undefined}>z z z</div>}
         {showLevelUp && (
