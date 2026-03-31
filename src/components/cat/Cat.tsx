@@ -590,6 +590,7 @@ export function Cat() {
     setBubble(null);
     if (isAiBubble) {
       setIsAiBubble(false);
+      if (isDraggingRef.current) return; // 드래그 중이면 리사이즈 건너뜀
       try {
         const pos = await appWindow.current.outerPosition();
         const scale = await appWindow.current.scaleFactor();

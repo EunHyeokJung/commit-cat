@@ -93,10 +93,11 @@
   height: calc(72px * 1.12 * 0.94 * 0.94);
 }
 
-/* grab 이미지 (드래그 시 1.8배 크기, 아래로 25px 이동) */
+/* grab 이미지 (드래그 시 1.8배 크기, 아래로 15px 이동) */
 .cat__image--grab {
   height: 130px !important;
-  transform: translateY(25px);
+  width: auto !important;
+  transform: translateY(15px) !important;
 }
 
 /* petting 이미지 (누워있는 가로형 포즈) */
