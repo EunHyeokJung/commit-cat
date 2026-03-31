@@ -187,9 +187,12 @@ npm run tauri dev
 - [x] Remove duplicated model files in `src-tauri`
 - [x] State machine integration (core as single source of truth)
 
-**v1.2 — Design & Items 🎨**
+**v1.2 — Design & Items (in progress) 🎨**
+- [x] Item system foundation (hats, accessories, inventory UI)
+- [x] Grab sprite system (color-specific drag animations)
+- [x] AI provider/model selection (Claude + OpenAI GPT)
+- [x] JetBrains plugin marketplace preparation
 - [ ] Cat design renewal
-- [ ] Item system (hats, accessories, milestone rewards)
 - [ ] Auto-equip items (birthday hat, commit streak crown, etc.)
 - [ ] JetBrains Extension marketplace release
 
@@ -232,5 +235,5 @@ MIT License
 
 ## 💬 Status
 
-v1.1 in progress — architecture refactor for cloud expansion
+v1.2 in progress — item system & design renewal
 If you like the idea, consider giving the repo a ⭐
