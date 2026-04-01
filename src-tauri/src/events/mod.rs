@@ -1,6 +1,7 @@
 /// 백엔드 → 프론트엔드 이벤트 이름 상수
 ///
 /// 이벤트 네이밍: "도메인:액션" 패턴
+#[allow(dead_code)]
 pub mod event_names {
     // 고양이 상태
     pub const CAT_STATE_CHANGED: &str = "cat:state-changed";

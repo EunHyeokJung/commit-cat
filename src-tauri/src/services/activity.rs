@@ -50,13 +50,13 @@ pub async fn start_monitor(app: AppHandle) {
         if idle_seconds >= 600 && !sleep_emitted {
             let _ = app.emit("activity:sleeping", idle_seconds);
             sleep_emitted = true;
-        } else if idle_seconds >= 180 && idle_seconds < 600 && was_ide_running && !is_ide_running {
+        } else if (180..600).contains(&idle_seconds) && was_ide_running && !is_ide_running {
             let _ = app.emit("activity:idle", idle_seconds);
         }
 
         // 4. 밤 시간 체크 (1회만)
         let hour = chrono::Local::now().hour();
-        if is_ide_running && (hour >= 23 || hour < 6) {
+        if is_ide_running && !(6..23).contains(&hour) {
             if !late_night_emitted {
                 let _ = app.emit("activity:late-night-coding", hour);
                 late_night_emitted = true;
@@ -104,7 +104,7 @@ fn auto_register_repos(app: &AppHandle) {
 }
 
 /// 디렉토리에서 위로 올라가며 .git 폴더 탐색
-fn find_git_root(start: &PathBuf) -> Option<PathBuf> {
+fn find_git_root(start: &std::path::Path) -> Option<PathBuf> {
     let mut current = start.clone();
     loop {
         if current.join(".git").exists() {

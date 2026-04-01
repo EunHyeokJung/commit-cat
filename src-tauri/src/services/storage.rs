@@ -100,6 +100,7 @@ fn save_to_dir(dir: &Path, data: &AppData) -> Result<(), String> {
 }
 
 /// History 관리: 90일 초과 데이터 정리
+#[allow(dead_code)]
 pub fn cleanup_history(data: &mut AppData) {
     if data.history.len() > 90 {
         data.history.truncate(90);

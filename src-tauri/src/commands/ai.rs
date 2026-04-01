@@ -41,6 +41,7 @@ struct OpenAIResponse {
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct CodexAuthFile {
     #[serde(default)]
     auth_mode: Option<String>,
@@ -51,6 +52,7 @@ struct CodexAuthFile {
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct CodexAuthTokens {
     #[serde(default)]
     access_token: Option<String>,

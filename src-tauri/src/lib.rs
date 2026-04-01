@@ -9,12 +9,16 @@ use tauri::menu::MenuBuilder;
 use tauri::Manager;
 
 #[cfg(target_os = "macos")]
+#[allow(deprecated)]
 use cocoa::appkit::{NSColor, NSWindow};
 #[cfg(target_os = "macos")]
+#[allow(deprecated)]
 use cocoa::base::{id, nil, NO};
 
 #[cfg(target_os = "macos")]
+#[allow(deprecated)]
 pub(crate) fn setup_macos_window(window: &tauri::WebviewWindow) {
+    #[allow(unused_imports)]
     use tauri::Emitter;
 
     if let Ok(ns_window) = window.ns_window() {

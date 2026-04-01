@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 /// 고양이의 현재 상태 (상태 머신)
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum CatState {
+    #[default]
     Idle,
     Coding,
     Celebrating,
@@ -11,12 +12,6 @@ pub enum CatState {
     Sleeping,
     Tired,
     Interaction,
-}
-
-impl Default for CatState {
-    fn default() -> Self {
-        CatState::Idle
-    }
 }
 
 /// 고양이의 현재 표정/이모지

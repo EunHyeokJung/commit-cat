@@ -62,5 +62,5 @@ pub fn transition(current: &CatState, event: &StateEvent) -> Option<CatState> {
 /// 밤 시간 판정 (기본: 23시 ~ 6시)
 pub fn is_night_time() -> bool {
     let hour = Local::now().hour();
-    hour >= 23 || hour < 6
+    !(6..23).contains(&hour)
 }

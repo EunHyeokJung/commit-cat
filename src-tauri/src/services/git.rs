@@ -63,7 +63,7 @@ pub async fn start_watcher(app: AppHandle) {
 }
 
 /// .git/logs/refs/remotes/origin/ 아래 모든 reflog 라인 수 합산
-fn count_remote_log_lines(repo_path: &PathBuf) -> usize {
+fn count_remote_log_lines(repo_path: &std::path::Path) -> usize {
     let logs_dir = repo_path.join(".git/logs/refs/remotes/origin");
     let mut total = 0;
     if let Ok(entries) = std::fs::read_dir(&logs_dir) {
@@ -79,7 +79,7 @@ fn count_remote_log_lines(repo_path: &PathBuf) -> usize {
 }
 
 /// .git/HEAD에서 현재 커밋 해시 읽기
-fn read_head(repo_path: &PathBuf) -> Option<String> {
+fn read_head(repo_path: &std::path::Path) -> Option<String> {
     let head_path = repo_path.join(".git").join("HEAD");
     let content = std::fs::read_to_string(&head_path).ok()?;
 
@@ -111,7 +111,7 @@ fn read_head(repo_path: &PathBuf) -> Option<String> {
 }
 
 /// 오늘 커밋 수 계산
-pub fn count_today_commits(repo_path: &PathBuf) -> u32 {
+pub fn count_today_commits(repo_path: &std::path::Path) -> u32 {
     let output = silent_command("git")
         .current_dir(repo_path)
         .args(["rev-list", "--count", "--since=midnight", "HEAD"])

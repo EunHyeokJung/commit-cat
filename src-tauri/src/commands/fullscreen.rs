@@ -1,5 +1,6 @@
 /// 풀스크린 감지
 #[tauri::command]
+#[allow(clippy::needless_return)]
 pub async fn check_fullscreen() -> Result<bool, String> {
     #[cfg(target_os = "macos")]
     {
@@ -18,6 +19,7 @@ pub async fn check_fullscreen() -> Result<bool, String> {
 }
 
 #[cfg(target_os = "macos")]
+#[allow(deprecated)]
 fn check_fullscreen_macos() -> bool {
     // NSScreen 기반: 메뉴바가 숨겨져 있으면 풀스크린
     use cocoa::appkit::NSScreen;

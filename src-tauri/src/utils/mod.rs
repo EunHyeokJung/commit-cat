@@ -1,4 +1,4 @@
-/// 유틸리티 함수들
+#![allow(dead_code)]
 
 /// 오늘 날짜 문자열 (YYYY-MM-DD)
 pub fn today_string() -> String {
