@@ -105,7 +105,7 @@ fn auto_register_repos(app: &AppHandle) {
 
 /// 디렉토리에서 위로 올라가며 .git 폴더 탐색
 fn find_git_root(start: &std::path::Path) -> Option<PathBuf> {
-    let mut current = start.clone();
+    let mut current = start.to_path_buf();
     loop {
         if current.join(".git").exists() {
             return Some(current);

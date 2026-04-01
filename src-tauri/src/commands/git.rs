@@ -19,7 +19,7 @@ pub async fn get_today_commits(app: tauri::AppHandle) -> Result<u32, String> {
     let repos = services::storage::get_watched_repos(&app);
     let total: u32 = repos
         .iter()
-        .map(services::git::count_today_commits)
+        .map(|r| services::git::count_today_commits(r))
         .sum();
     Ok(total)
 }
