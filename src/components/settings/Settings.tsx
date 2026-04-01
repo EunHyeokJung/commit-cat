@@ -934,8 +934,8 @@ export function Settings() {
             }}
             style={{
               flex: 1, padding: "6px 8px", fontSize: 13,
-              background: "#1a1a2e", color: "#fff", border: "1px solid #444",
-              borderRadius: 6, appearance: "none" as const,
+              background: "#f5f5f5", color: "#333", border: "1px solid #ddd",
+              borderRadius: 6,
             }}
           >
             <option value="">Month</option>
@@ -952,8 +952,8 @@ export function Settings() {
             }}
             style={{
               flex: 1, padding: "6px 8px", fontSize: 13,
-              background: "#1a1a2e", color: "#fff", border: "1px solid #444",
-              borderRadius: 6, appearance: "none" as const,
+              background: "#f5f5f5", color: "#333", border: "1px solid #ddd",
+              borderRadius: 6,
             }}
           >
             <option value="">Day</option>
