@@ -1143,15 +1143,16 @@ export function Cat() {
             };
 
             // 아이템별 크기 + 머리 중심 기준 오프셋
+            // 같은 사이즈 아이템은 같은 offsetY 사용
             const hatConfig: Record<string, { size: number; offsetY: number; offsetX: number }> = {
-              party_hat:  { size: 28, offsetY: -24, offsetX: 0 },
-              wizard:     { size: 32, offsetY: -23, offsetX: 0 },
-              crown:      { size: 26, offsetY: -25, offsetX: 0 },
-              tophat:     { size: 26, offsetY: -24, offsetX: 0 },
+              party_hat:  { size: 28, offsetY: -24, offsetX: 0 },  // 28px 그룹
+              cornhead:   { size: 28, offsetY: -24, offsetX: 0 },  // 28px 그룹
+              crown:      { size: 26, offsetY: -25, offsetX: 0 },  // 26px 그룹
+              tophat:     { size: 26, offsetY: -25, offsetX: 0 },  // 26px 그룹
+              tuna:       { size: 26, offsetY: -25, offsetX: 0 },  // 26px 그룹
               santahat:   { size: 30, offsetY: -24, offsetX: 2 },
-              sunglass:   { size: 24, offsetY: -6,  offsetX: 0 },
-              tuna:       { size: 26, offsetY: -20, offsetX: 0 },
-              cornhead:   { size: 28, offsetY: -22, offsetX: 0 },
+              wizard:     { size: 32, offsetY: -23, offsetX: 0 },
+              sunglass:   { size: 24, offsetY: -6,  offsetX: 0 },  // 선글라스 (눈 높이)
             };
 
             // 디버그 강제 상태 또는 실제 상태
