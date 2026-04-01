@@ -66,6 +66,12 @@ pub struct AppSettings {
     /// deprecated: 이전 버전 호환용
     #[serde(default)]
     pub sub_cats_enabled: Option<bool>,
+    /// 생일 월 (1-12)
+    #[serde(default)]
+    pub birthday_month: Option<u32>,
+    /// 생일 일 (1-31)
+    #[serde(default)]
+    pub birthday_day: Option<u32>,
 }
 
 fn default_max_companions() -> u32 {
@@ -106,6 +112,8 @@ impl Default for AppSettings {
             ai_provider_reasoning: HashMap::new(),
             max_companions: default_max_companions(),
             sub_cats_enabled: None,
+            birthday_month: None,
+            birthday_day: None,
         }
     }
 }
@@ -159,6 +167,12 @@ pub struct CatPersistence {
     /// 심야 코딩 세션 횟수 (누적)
     #[serde(default)]
     pub total_late_night_sessions: u32,
+    /// 유저가 직접 선택한 모자 (자동 장착 복원용)
+    #[serde(default)]
+    pub preferred_hat: Option<String>,
+    /// 자동 장착 만료 시각 (ISO format)
+    #[serde(default)]
+    pub auto_equip_until: Option<String>,
 }
 
 impl Default for CatPersistence {
@@ -173,6 +187,8 @@ impl Default for CatPersistence {
             current_hat: None,
             unlocked_hats: Vec::new(),
             total_late_night_sessions: 0,
+            preferred_hat: None,
+            auto_equip_until: None,
         }
     }
 }

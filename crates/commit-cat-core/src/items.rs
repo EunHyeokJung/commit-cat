@@ -29,6 +29,42 @@ pub fn auto_equip(newly_unlocked: &[String], current_hat: &Option<String>) -> Op
     Some(newly_unlocked[0].clone())
 }
 
+/// 이벤트 기반 자동 장착 결과
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AutoEquipEvent {
+    pub hat_id: String,
+    pub reason: String,
+    pub duration_hours: u64,
+}
+
+/// 특별 이벤트 시 임시 모자 자동 장착 체크
+/// 우선순위: 생일 > 레벨10 > 7일 스트릭 > 12월
+pub fn check_event_auto_equip(
+    is_birthday: bool,
+    level: u32,
+    current_streak: u32,
+    month: u32,
+    already_unlocked: &[String],
+) -> Option<AutoEquipEvent> {
+    let candidates: &[(bool, &str, &str, u64)] = &[
+        (is_birthday, "party_hat", "Happy Birthday! 🎂🎉", 24),
+        (level >= 10, "crown", "Level 10! 👑", 4),
+        (current_streak >= 7, "tophat", "7-day streak! 🔥", 4),
+        (month == 12, "santahat", "Merry Christmas! 🎄", 24),
+    ];
+
+    for &(condition, hat_id, reason, hours) in candidates {
+        if condition && already_unlocked.iter().any(|h| h == hat_id) {
+            return Some(AutoEquipEvent {
+                hat_id: hat_id.to_string(),
+                reason: reason.to_string(),
+                duration_hours: hours,
+            });
+        }
+    }
+    None
+}
+
 /// Check which hats should be newly unlocked based on current stats
 pub fn check_unlocks(
     level: u32,

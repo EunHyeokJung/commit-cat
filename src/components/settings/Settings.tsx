@@ -32,6 +32,8 @@ interface SettingsPayload {
   aiProviderModels?: Record<string, string>;
   aiProviderReasoning?: Record<string, string>;
   maxCompanions?: number;
+  birthdayMonth?: number | null;
+  birthdayDay?: number | null;
 }
 
 interface AIProviderModelOption {
@@ -156,6 +158,8 @@ export function Settings() {
   const [focusMinutes, setFocusMinutes] = useState(25);
   const [breakMinutes, setBreakMinutes] = useState(5);
   const [loading, setLoading] = useState(true);
+  const [birthdayMonth, setBirthdayMonth] = useState<number | null>(null);
+  const [birthdayDay, setBirthdayDay] = useState<number | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [cloneModalOpen, setCloneModalOpen] = useState(false);
   const [cloneUrl, setCloneUrl] = useState("");
@@ -265,6 +269,8 @@ export function Settings() {
         if (settings.githubUsername) setGithubUsername(settings.githubUsername);
         if (settings.notificationsEnabled !== undefined) setNotificationsEnabled(settings.notificationsEnabled);
         if (settings.maxCompanions !== undefined) setMaxCompanions(settings.maxCompanions);
+        if (settings.birthdayMonth) setBirthdayMonth(settings.birthdayMonth);
+        if (settings.birthdayDay) setBirthdayDay(settings.birthdayDay);
         if (settings.anthropicApiKey) setAiKeySaved(true);
         if (settings.openaiApiKey) setOpenaiKeySaved(true);
         const normalizedProvider = normalizeAiProvider(settings.aiProvider);
@@ -909,6 +915,52 @@ export function Settings() {
               )}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Birthday */}
+      <section className="settings__section">
+        <h2 className="settings__section-title">Birthday</h2>
+        <p style={{ fontSize: 11, color: "#888", marginBottom: 8 }}>
+          Set your birthday for a special surprise!
+        </p>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <select
+            value={birthdayMonth ?? ""}
+            onChange={(e) => {
+              const m = e.target.value ? Number(e.target.value) : null;
+              setBirthdayMonth(m);
+              persistSettingsPatch({ birthdayMonth: m, birthdayDay: birthdayDay });
+            }}
+            style={{
+              flex: 1, padding: "6px 8px", fontSize: 13,
+              background: "#1a1a2e", color: "#fff", border: "1px solid #444",
+              borderRadius: 6, appearance: "none" as const,
+            }}
+          >
+            <option value="">Month</option>
+            {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((name, i) => (
+              <option key={i + 1} value={i + 1}>{name}</option>
+            ))}
+          </select>
+          <select
+            value={birthdayDay ?? ""}
+            onChange={(e) => {
+              const d = e.target.value ? Number(e.target.value) : null;
+              setBirthdayDay(d);
+              persistSettingsPatch({ birthdayMonth: birthdayMonth, birthdayDay: d });
+            }}
+            style={{
+              flex: 1, padding: "6px 8px", fontSize: 13,
+              background: "#1a1a2e", color: "#fff", border: "1px solid #444",
+              borderRadius: 6, appearance: "none" as const,
+            }}
+          >
+            <option value="">Day</option>
+            {Array.from({ length: birthdayMonth === 2 ? 29 : [4,6,9,11].includes(birthdayMonth ?? 0) ? 30 : 31 }, (_, i) => (
+              <option key={i + 1} value={i + 1}>{i + 1}</option>
+            ))}
+          </select>
         </div>
       </section>
 

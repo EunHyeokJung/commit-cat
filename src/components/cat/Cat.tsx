@@ -698,6 +698,20 @@ export function Cat() {
     }, duration);
   }, []);
 
+  // ── 이벤트 자동 장착 (생일, 마일스톤 등) ──
+  useEffect(() => {
+    invoke<string | null>("check_event_equip").then(reason => {
+      if (reason) showBubble(reason, 5000);
+    }).catch(() => {});
+  }, [showBubble]);
+
+  useEffect(() => {
+    const unlisten = listen<string>("hat:event-equip", (event) => {
+      showBubble(event.payload, 5000);
+    });
+    return () => { unlisten.then(fn => fn()); };
+  }, [showBubble]);
+
   // ── 모자 잠금해제 알림 ──
   useEffect(() => {
     const unlisten = listen("hat:unlocked", () => {

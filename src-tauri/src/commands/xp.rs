@@ -171,6 +171,39 @@ pub async fn add_xp(app: AppHandle, amount: u32, source: String) -> Result<AddXp
         let _ = app.emit("hat:unlocked", &newly_unlocked);
     }
 
+    // 이벤트 기반 자동 장착 (생일, 레벨, 스트릭, 12월)
+    let is_birthday = {
+        let today = Local::now();
+        data.settings.birthday_month == Some(today.month())
+            && data.settings.birthday_day == Some(today.day())
+    };
+    if let Some(event) = commit_cat_core::items::check_event_auto_equip(
+        is_birthday,
+        data.cat.level,
+        data.cat.streak_days,
+        month,
+        &data.cat.unlocked_hats,
+    ) {
+        // 기존 자동 장착이 만료되었거나 없을 때만 적용
+        let expired = data.cat.auto_equip_until.as_ref().map_or(true, |until| {
+            chrono::NaiveDateTime::parse_from_str(until, "%Y-%m-%dT%H:%M:%S")
+                .map_or(true, |t| Local::now().naive_local() > t)
+        });
+        if expired && data.cat.current_hat.as_deref() != Some(&event.hat_id) {
+            if data.cat.preferred_hat.is_none() {
+                data.cat.preferred_hat = data.cat.current_hat.clone();
+            }
+            data.cat.current_hat = Some(event.hat_id.clone());
+            let until = (Local::now() + chrono::Duration::hours(event.duration_hours as i64))
+                .naive_local()
+                .format("%Y-%m-%dT%H:%M:%S")
+                .to_string();
+            data.cat.auto_equip_until = Some(until);
+            let _ = app.emit("hat:equipped", &event.hat_id);
+            let _ = app.emit("hat:event-equip", &event.reason);
+        }
+    }
+
     let result = AddXpResult {
         level: data.cat.level,
         current_exp: data.cat.exp,
@@ -204,9 +237,62 @@ pub async fn add_xp(app: AppHandle, amount: u32, source: String) -> Result<AddXp
 #[tauri::command]
 pub async fn equip_hat(app: AppHandle, hat_id: Option<String>) -> Result<(), String> {
     let mut data = storage::load(&app)?;
-    data.cat.current_hat = hat_id;
+    data.cat.current_hat = hat_id.clone();
+    data.cat.preferred_hat = hat_id;
+    data.cat.auto_equip_until = None;
     storage::save(&app, &data)?;
     Ok(())
+}
+
+#[tauri::command]
+pub async fn check_event_equip(app: AppHandle) -> Result<Option<String>, String> {
+    let mut data = storage::load(&app)?;
+    let today = Local::now();
+
+    // 자동 장착 만료 체크 → 복원
+    if let Some(until) = &data.cat.auto_equip_until {
+        if let Ok(t) = chrono::NaiveDateTime::parse_from_str(until, "%Y-%m-%dT%H:%M:%S") {
+            if today.naive_local() > t {
+                data.cat.current_hat = data.cat.preferred_hat.take();
+                data.cat.auto_equip_until = None;
+                storage::save(&app, &data)?;
+                let _ = app.emit("hat:equipped", &data.cat.current_hat);
+            }
+        }
+    }
+
+    // 이벤트 자동 장착 체크
+    let is_birthday = data.settings.birthday_month == Some(today.month())
+        && data.settings.birthday_day == Some(today.day());
+    let month = today.month();
+
+    if let Some(event) = commit_cat_core::items::check_event_auto_equip(
+        is_birthday,
+        data.cat.level,
+        data.cat.streak_days,
+        month,
+        &data.cat.unlocked_hats,
+    ) {
+        let expired = data.cat.auto_equip_until.as_ref().map_or(true, |until| {
+            chrono::NaiveDateTime::parse_from_str(until, "%Y-%m-%dT%H:%M:%S")
+                .map_or(true, |t| today.naive_local() > t)
+        });
+        if expired && data.cat.current_hat.as_deref() != Some(&event.hat_id) {
+            if data.cat.preferred_hat.is_none() {
+                data.cat.preferred_hat = data.cat.current_hat.clone();
+            }
+            data.cat.current_hat = Some(event.hat_id.clone());
+            let until = (today + chrono::Duration::hours(event.duration_hours as i64))
+                .naive_local()
+                .format("%Y-%m-%dT%H:%M:%S")
+                .to_string();
+            data.cat.auto_equip_until = Some(until);
+            storage::save(&app, &data)?;
+            let _ = app.emit("hat:equipped", &event.hat_id);
+            return Ok(Some(event.reason));
+        }
+    }
+    Ok(None)
 }
 
 #[tauri::command]
