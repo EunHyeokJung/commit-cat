@@ -194,7 +194,7 @@ npm run tauri dev
 - [x] JetBrains plugin marketplace preparation
 - [x] Cat design renewal
 - [x] Item positioning & motion polish (per-state sprite alignment)
-- [ ] Auto-equip items (birthday hat, commit streak crown, etc.)
+- [x] Auto-equip items (birthday hat, commit streak crown, etc.)
 - [ ] JetBrains Extension marketplace release
 
 **v1.3 — VSCode Webview 🖥️**
