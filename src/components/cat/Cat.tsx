@@ -191,13 +191,13 @@ export function Cat() {
   // 투명 영역 클릭 통과 (드래그 중에는 비활성화)
   const ignoreRef = useRef(false);
   const catRef = useRef<HTMLDivElement>(null);
+  const ignoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     const win = appWindow.current;
     const PAD = 30;
     const IGNORE_DELAY = 200;
     let busy = false;
     let queued: boolean | null = null;
-    let ignoreTimer: ReturnType<typeof setTimeout> | null = null;
 
     const applyIgnore = async (ignore: boolean) => {
       if (busy) { queued = ignore; return; }
@@ -234,16 +234,16 @@ export function Cat() {
 
       if (shouldIgnore) {
         // 투명 영역 진입: 딜레이 후 클릭 통과 활성화
-        if (!ignoreTimer) {
-          ignoreTimer = setTimeout(() => {
-            ignoreTimer = null;
+        if (!ignoreTimerRef.current) {
+          ignoreTimerRef.current = setTimeout(() => {
+            ignoreTimerRef.current = null;
             ignoreRef.current = true;
             applyIgnore(true);
           }, IGNORE_DELAY);
         }
       } else {
         // 고양이 영역 진입: 즉시 클릭 통과 해제
-        if (ignoreTimer) { clearTimeout(ignoreTimer); ignoreTimer = null; }
+        if (ignoreTimerRef.current) { clearTimeout(ignoreTimerRef.current); ignoreTimerRef.current = null; }
         ignoreRef.current = false;
         applyIgnore(false);
       }
@@ -725,8 +725,15 @@ export function Cat() {
   const pendingDragRef = useRef(false); // mousedown 했지만 아직 드래그 아닌 상태
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault(); // OS 제스처(Mission Control 등) 방지
+    e.preventDefault();
     e.stopPropagation();
+    // 클릭통과 타이머 즉시 취소 — 이게 없으면 타이머가 뒤늦게 발화해서 클릭불가 상태 됨
+    if (ignoreTimerRef.current) {
+      clearTimeout(ignoreTimerRef.current);
+      ignoreTimerRef.current = null;
+    }
+    ignoreRef.current = false;
+    appWindow.current.setIgnoreCursorEvents(false).catch(() => {});
     if (e.button === 2) {
       isPettingRef.current = true;
       petLastX.current = e.screenX;
@@ -741,8 +748,6 @@ export function Cat() {
     didDrag.current = false;
     dragStartMouse.current = { x: e.screenX, y: e.screenY };
     dragStartWin.current = { ...winPosRef.current };
-    ignoreRef.current = false;
-    appWindow.current.setIgnoreCursorEvents(false).catch(() => {});
   }, []);
 
   // 드래그 감지: mousedown 후 mousemove에서 threshold 초과 시 드래그 진입
