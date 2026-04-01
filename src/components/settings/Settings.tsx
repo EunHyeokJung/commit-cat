@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { emit } from "@tauri-apps/api/event";
+import { emit, listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import "./Settings.css";
 
@@ -188,6 +188,45 @@ export function Settings() {
   const [codexChecking, setCodexChecking] = useState(false);
   const [currentHat, setCurrentHat] = useState<string | null>(null);
   const [unlockedHats, setUnlockedHats] = useState<string[]>([]);
+  const [itemDebugMode, setItemDebugMode] = useState(false);
+  const [debugLog, setDebugLog] = useState("");
+  const [allSavedAnchors, setAllSavedAnchors] = useState<Record<string, { y: number; x: number }>>({});
+
+  // 디버그 모드: 키보드 → Cat 윈도우로 전달
+  useEffect(() => {
+    if (!itemDebugMode) return;
+    const handler = (e: KeyboardEvent) => {
+      const prefix = e.shiftKey ? "shift_" : "";
+      if (e.key === "ArrowUp") { e.preventDefault(); emit("item:debug:key", prefix + "up"); }
+      if (e.key === "ArrowDown") { e.preventDefault(); emit("item:debug:key", prefix + "down"); }
+      if (e.key === "ArrowLeft") { e.preventDefault(); emit("item:debug:key", prefix + "left"); }
+      if (e.key === "ArrowRight") { e.preventDefault(); emit("item:debug:key", prefix + "right"); }
+      if (e.key === "Enter") { e.preventDefault(); emit("item:debug:key", "enter"); }
+      if (e.key === "r" || e.key === "R") { emit("item:debug:key", "reset"); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [itemDebugMode]);
+
+  // 디버그 저장 결과 수신 + 전체 목록 갱신
+  useEffect(() => {
+    const unlisten = listen<string>("item:debug:saved", (event) => {
+      setDebugLog(event.payload);
+      try {
+        setAllSavedAnchors(JSON.parse(localStorage.getItem("itemDebugAnchors") || "{}"));
+      } catch { /* */ }
+    });
+    return () => { unlisten.then(fn => fn()); };
+  }, []);
+
+  // 디버그 모드 ON 시 저장된 앵커 로드
+  useEffect(() => {
+    if (itemDebugMode) {
+      try {
+        setAllSavedAnchors(JSON.parse(localStorage.getItem("itemDebugAnchors") || "{}"));
+      } catch { /* */ }
+    }
+  }, [itemDebugMode]);
 
   const refreshCodexStatus = useCallback(async () => {
     setCodexChecking(true);
@@ -806,6 +845,55 @@ export function Settings() {
               );
             })}
           </div>
+          {/* Item Debug Mode */}
+          <button
+            onClick={() => {
+              const next = !itemDebugMode;
+              setItemDebugMode(next);
+              setDebugLog("");
+              emit("item:debug", next);
+            }}
+            style={{
+              marginTop: 8,
+              padding: "6px 10px",
+              fontSize: 11,
+              borderRadius: 6,
+              border: itemDebugMode ? "1px solid #ffd700" : "1px solid #555",
+              background: itemDebugMode ? "#3a3a1a" : "#1a1a2e",
+              color: itemDebugMode ? "#ffd700" : "#888",
+              cursor: "pointer",
+              width: "100%",
+            }}
+          >
+            {itemDebugMode ? "🔴 Debug ON — ↑↓←→: 이동 (Shift=5px) / Enter: 저장 / R: 리셋" : "Item Debug Mode"}
+          </button>
+          {itemDebugMode && (
+            <div style={{ marginTop: 6, fontSize: 10, fontFamily: "monospace" }}>
+              {debugLog && (
+                <div style={{ color: "#4f4", marginBottom: 4 }}>✅ {debugLog}</div>
+              )}
+              {Object.keys(allSavedAnchors).length > 0 && (
+                <div style={{ background: "#1a1a2e", borderRadius: 4, padding: 6, border: "1px solid #333" }}>
+                  <div style={{ color: "#aaa", marginBottom: 3 }}>저장된 앵커:</div>
+                  {["brown", "orange", "white"].map(color => {
+                    const entries = Object.entries(allSavedAnchors).filter(([k]) => k.startsWith(color + "/"));
+                    if (entries.length === 0) return null;
+                    return (
+                      <div key={color} style={{ marginBottom: 2 }}>
+                        <span style={{ color: color === "brown" ? "#c87" : color === "orange" ? "#fa5" : "#ccc" }}>{color}</span>
+                        {": "}
+                        {entries.map(([k, v]) => (
+                          <span key={k} style={{ color: "#8f8", marginRight: 6 }}>
+                            {k.split("/")[1]}({v.y},{v.x})
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
