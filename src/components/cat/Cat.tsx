@@ -1018,21 +1018,48 @@ export function Cat() {
             alt="cat"
             draggable={false}
           />
-          {currentHat && (() => {
-            // 아이템별 위치/크기 오프셋
+          {currentHat && !showPettingImg && (() => {
+            // 아이템별 기본 위치/크기 (white stand 기준)
             const hatConfig: Record<string, { size: number; topOffset: number; leftOffset: number }> = {
-              party_hat:  { size: 28, topOffset: -22, leftOffset: 0 },
-              wizard:     { size: 32, topOffset: -24, leftOffset: 0 },
-              crown:      { size: 26, topOffset: -16, leftOffset: 0 },
-              tophat:     { size: 26, topOffset: -22, leftOffset: 0 },
-              santahat:   { size: 30, topOffset: -20, leftOffset: 2 },
-              sunglass:   { size: 24, topOffset: -2,  leftOffset: 0 },
-              tuna:       { size: 26, topOffset: -18, leftOffset: 0 },
-              cornhead:   { size: 28, topOffset: -20, leftOffset: 0 },
+              party_hat:  { size: 28, topOffset: 0,  leftOffset: 0 },
+              wizard:     { size: 32, topOffset: -2, leftOffset: 0 },
+              crown:      { size: 26, topOffset: -6, leftOffset: 0 },
+              tophat:     { size: 26, topOffset: 0,  leftOffset: 0 },
+              santahat:   { size: 30, topOffset: 2,  leftOffset: 2 },
+              sunglass:   { size: 24, topOffset: 20, leftOffset: 0 },
+              tuna:       { size: 26, topOffset: 4,  leftOffset: 0 },
+              cornhead:   { size: 28, topOffset: 2,  leftOffset: 0 },
             };
-            const cfg = hatConfig[currentHat] ?? { size: 28, topOffset: -20, leftOffset: 0 };
-            // 행동별 Y 보정
-            const stateYOffset = behavior === "sleep" ? 18 : behavior === "sit" ? 8 : isDragging ? 5 : catState === "celebrating" ? -5 : 0;
+            const cfg = hatConfig[currentHat] ?? { size: 28, topOffset: 0, leftOffset: 0 };
+
+            // 현재 상태 결정
+            const currentState = isDragging ? "grab"
+              : catState === "celebrating" ? "celebrating"
+              : behavior === "sleep" ? "sleep"
+              : behavior === "sit" ? "sit"
+              : behavior === "walk" ? "walk"
+              : "stand";
+
+            // 상태별 보정 (머리방향 X + 아래로 Y)
+            const stateOffset: Record<string, { y: number; x: number }> = {
+              stand:       { y: 10, x: 5 },
+              walk:        { y: 10, x: 5 },
+              sit:         { y: 5,  x: 5 },
+              sleep:       { y: 2,  x: 5 },
+              grab:        { y: -40, x: 2 },
+              celebrating: { y: 8,  x: 5 },
+            };
+
+            // 색상별 기본 보정 (스프라이트 높이 차이로 머리 위치가 다름)
+            const colorYOffset: Record<string, number> = {
+              white: 0,    // 72px
+              orange: -7,  // 79.2px (taller)
+              brown: -9,   // 80.64px (tallest)
+            };
+
+            const sOffset = stateOffset[currentState] ?? { y: 0, x: 0 };
+            const cOffset = colorYOffset[catColor] ?? 0;
+
             return (
               <img
                 src={`/assets/item/${currentHat}.png`}
@@ -1041,8 +1068,8 @@ export function Cat() {
                   position: "absolute",
                   width: cfg.size,
                   height: cfg.size,
-                  top: cfg.topOffset + stateYOffset,
-                  left: `calc(50% + ${cfg.leftOffset}px)`,
+                  top: cfg.topOffset + sOffset.y + cOffset,
+                  left: `calc(50% + ${cfg.leftOffset + sOffset.x}px)`,
                   transform: "translateX(-50%)",
                   pointerEvents: "none",
                   imageRendering: "pixelated",
@@ -1089,7 +1116,11 @@ export function Cat() {
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={handleChatKeyDown}
-            onBlur={() => setTimeout(() => closeChat(), 150)}
+            onBlur={() => setTimeout(() => {
+              // 드래그 시작 중이면 closeChat 건너뜀 (race condition 방지)
+              if (isDraggingRef.current || pendingDragRef.current) return;
+              closeChat();
+            }, 150)}
             maxLength={200}
           />
           <button
