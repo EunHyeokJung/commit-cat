@@ -855,9 +855,9 @@ export function Cat() {
       setIsDragging(true);
       setBubble(null);
       // 윈도우 크기 변경 시 고양이가 점프하지 않도록 위치 보정
-      // 마우스가 grab 이미지의 머리 부근(상단 1/3, 중앙)에 오도록 조정
-      const newX = e.screenX - DRAG_W / 2;
-      const newY = e.screenY - DRAG_H / 3;
+      // 마우스가 grab 이미지의 목 부근에 오도록 조정
+      const newX = e.screenX - DRAG_W * 0.4;
+      const newY = e.screenY - DRAG_H * 0.25;
       dragStartMouse.current = { x: e.screenX, y: e.screenY };
       dragStartWin.current = { x: newX, y: newY };
       appWindow.current.setSize(new LogicalSize(DRAG_W, DRAG_H)).catch(() => {});
