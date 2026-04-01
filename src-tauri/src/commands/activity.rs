@@ -1,5 +1,5 @@
-use commit_cat_core::models::activity::{ActivityEvent, CodingStatus, DailySummary};
 use crate::services::storage;
+use commit_cat_core::models::activity::{ActivityEvent, CodingStatus, DailySummary};
 use tauri::AppHandle;
 
 /// 오늘 활동 요약 (이벤트에서 계산)
