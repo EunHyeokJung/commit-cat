@@ -1152,7 +1152,7 @@ export function Cat() {
               tuna:       { size: 26, offsetY: -25, offsetX: 0 },  // 26px 그룹
               santahat:   { size: 30, offsetY: -24, offsetX: 2 },
               wizard:     { size: 32, offsetY: -23, offsetX: 0 },
-              sunglass:   { size: 24, offsetY: -6,  offsetX: 0 },  // 선글라스 (눈 높이)
+              sunglass:   { size: 38, offsetY: -6,  offsetX: 0 },  // 선글라스 (눈 높이, 1.6x)
             };
 
             // 디버그 강제 상태 또는 실제 상태
@@ -1167,11 +1167,24 @@ export function Cat() {
 
             const anchor = headAnchor[catColor]?.[currentState] ?? { y: 20, x: 55 };
             const baseCfg = hatConfig[currentHat] ?? { size: 28, offsetY: -22, offsetX: 0 };
-            // 아이템별 상태 보정 (특정 아이템이 특정 상태에서만 추가 오프셋 필요할 때)
-            const hatStateOverride: Record<string, Record<string, { dy: number; dx: number }>> = {
-              crown: { grab: { dy: 0, dx: 0 } },
+            // 아이템별 색상×상태 보정 (crown 기준 앵커에서 벗어나는 아이템 개별 보정)
+            // key: "아이템/색상/상태"
+            const hatOverride: Record<string, { dy: number; dx: number }> = {
+              "tophat/brown/stand": { dy: 6, dx: 4 },
+              "tophat/brown/walk":  { dy: 8, dx: -2 },
+              "tophat/orange/stand": { dy: 4, dx: -2 },
+              "tophat/orange/walk":  { dy: 2, dx: 0 },
+              "tophat/orange/sleep": { dy: 2, dx: -4 },
+              "santahat/brown/stand": { dy: 4, dx: 4 },
+              "santahat/brown/walk":  { dy: 4, dx: -8 },
+              "santahat/brown/sit":   { dy: 6, dx: 0 },
+              "santahat/brown/sleep":  { dy: 10, dx: 0 },
+              "santahat/orange/sleep": { dy: 2, dx: -4 },
+              "tophat/brown/sit":   { dy: 6, dx: 0 },
+              "tophat/brown/sleep": { dy: 8, dx: 0 },
             };
-            const override = hatStateOverride[currentHat]?.[currentState] ?? { dy: 0, dx: 0 };
+            const overrideKey = `${currentHat}/${catColor}/${currentState}`;
+            const override = hatOverride[overrideKey] ?? { dy: 0, dx: 0 };
             const cfg = { ...baseCfg, offsetY: baseCfg.offsetY + override.dy, offsetX: baseCfg.offsetX + override.dx };
 
             // 디버그 모드: confirmed + 현재 delta 적용
