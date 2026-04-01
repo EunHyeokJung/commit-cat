@@ -24,8 +24,8 @@ async function notify(title: string, body: string) {
 
 const WIN_W = 200;
 const WIN_W_EXPANDED = 350;
-const DRAG_W = 250;
-const DRAG_H = 250;
+const DRAG_W = 160;
+const DRAG_H = 160;
 
 const normalMessages = ["hey there~ 😺", "what's up? 🐾", "hi hi~ 💛", "oh, hello! 😸", "noticed me? 👀"];
 const happyMessages = ["that feels nice~ 💛", "more more! 😻", "you're the best 🥰", "hehe~ 😸"];
