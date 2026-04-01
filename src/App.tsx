@@ -369,9 +369,15 @@ function App() {
 
   // 메인 고양이 색상 변경 시 서브 고양이 재배정
   useEffect(() => {
-    const unlisten = listen<string>("change-cat-color", () => {
-      // catStore의 setCatColor가 먼저 처리된 후 syncSubCats 실행
-      setTimeout(() => useCatStore.getState().syncSubCats(), 0);
+    const unlisten = listen<string>("change-cat-color", async () => {
+      // 설정에서 maxCompanions를 읽어서 반영
+      try {
+        const settings = await invoke<{ maxCompanions?: number }>("get_settings");
+        const companions = settings.maxCompanions ?? 2;
+        setTimeout(() => useCatStore.getState().syncSubCats(companions), 0);
+      } catch (_) {
+        setTimeout(() => useCatStore.getState().syncSubCats(0), 0);
+      }
     });
     return () => { unlisten.then((fn) => fn()); };
   }, []);
