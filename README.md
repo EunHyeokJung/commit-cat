@@ -193,7 +193,7 @@ npm run tauri dev
 - [x] AI provider/model selection (Claude + OpenAI GPT)
 - [x] JetBrains plugin marketplace preparation
 - [x] Cat design renewal
-- [ ] Item positioning & motion polish (per-state sprite alignment)
+- [x] Item positioning & motion polish (per-state sprite alignment)
 - [ ] Auto-equip items (birthday hat, commit streak crown, etc.)
 - [ ] JetBrains Extension marketplace release
 
