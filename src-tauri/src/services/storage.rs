@@ -34,7 +34,20 @@ pub fn init(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 
 /// 데이터 로드 (파싱 실패 시 백업에서 복구)
 pub fn load(app: &AppHandle) -> Result<AppData, String> {
-    load_from_dir(&data_dir(app)?)
+    let mut data = load_from_dir(&data_dir(app)?)?;
+
+    // 날짜가 바뀌었으면 DailySummary 리셋
+    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+    if data.today.date != today {
+        data.today = commit_cat_core::models::activity::DailySummary {
+            date: today,
+            ..Default::default()
+        };
+        // 리셋된 상태를 즉시 저장
+        let _ = save(app, &data);
+    }
+
+    Ok(data)
 }
 
 /// 데이터 저장 (atomic write + 백업)
