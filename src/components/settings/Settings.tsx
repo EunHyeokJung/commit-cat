@@ -869,7 +869,20 @@ export function Settings() {
             {itemDebugMode ? "🔴 Debug ON — ↑↓←→: 이동 (Shift=5px) / Enter: 저장 / R: 리셋" : "Item Debug Mode"}
           </button>
           {itemDebugMode && (
-            <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              <button
+                onClick={async () => {
+                  await invoke("unlock_all_hats");
+                  const info = await invoke<{ currentHat: string | null; unlockedHats: string[] }>("get_hat_info");
+                  setUnlockedHats(info.unlockedHats);
+                }}
+                style={{
+                  fontSize: 10, padding: "3px 8px", borderRadius: 4,
+                  border: "1px solid #f55", background: "#2a1a1a", color: "#f88", cursor: "pointer",
+                }}
+              >
+                Unlock All
+              </button>
               <span style={{ fontSize: 11, color: "#aaa" }}>강제 상태:</span>
               <select
                 onChange={(e) => emit("item:debug:forceState", e.target.value)}

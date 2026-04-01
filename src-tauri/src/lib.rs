@@ -231,6 +231,7 @@ pub fn run() {
             commands::xp::equip_hat,
             commands::xp::get_hat_info,
             commands::xp::check_event_equip,
+            commands::xp::unlock_all_hats,
             // GitHub
             commands::github::verify_github_token,
             commands::github::disconnect_github,

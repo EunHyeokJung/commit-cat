@@ -254,6 +254,20 @@ pub async fn equip_hat(app: AppHandle, hat_id: Option<String>) -> Result<(), Str
 }
 
 #[tauri::command]
+pub async fn unlock_all_hats(app: AppHandle) -> Result<(), String> {
+    let mut data = storage::load(&app)?;
+    let all_hats: Vec<String> = commit_cat_core::items::HATS.iter().map(|h| h.id.to_string()).collect();
+    for hat in &all_hats {
+        if !data.cat.unlocked_hats.contains(hat) {
+            data.cat.unlocked_hats.push(hat.clone());
+        }
+    }
+    storage::save(&app, &data)?;
+    let _ = app.emit("hat:unlocked", &all_hats);
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn check_event_equip(app: AppHandle) -> Result<Option<String>, String> {
     let mut data = storage::load(&app)?;
     let today = Local::now();
