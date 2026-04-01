@@ -804,7 +804,7 @@ export function Settings() {
         </div>
         {/* Inventory */}
         <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 11, color: "#aaa", marginBottom: 6 }}>Inventory</div>
+          <h2 className="settings__section-title">Inventory</h2>
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
