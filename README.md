@@ -187,17 +187,19 @@ npm run tauri dev
 - [x] Remove duplicated model files in `src-tauri`
 - [x] State machine integration (core as single source of truth)
 
-**v1.2 — Design & Items (in progress) 🎨**
+**v1.2 — Design & Items ✅**
 - [x] Item system foundation (hats, accessories, inventory UI)
 - [x] Grab sprite system (color-specific drag animations)
 - [x] AI provider/model selection (Claude + OpenAI GPT)
-- [x] JetBrains plugin marketplace preparation
 - [x] Cat design renewal
 - [x] Item positioning & motion polish (per-state sprite alignment)
 - [x] Auto-equip items (birthday hat, commit streak crown, etc.)
+
+**v1.3 — IDE Plugins 🧩**
+- [x] JetBrains plugin marketplace preparation
 - [ ] JetBrains Extension marketplace release
 
-**v1.3 — VSCode Webview 🖥️**
+**v1.4 — VSCode Webview 🖥️**
 - [ ] Cat rendering inside VSCode (Webview Panel)
 - [ ] Environment detection (desktop / Codespaces / web)
 
@@ -236,5 +238,5 @@ MIT License
 
 ## 💬 Status
 
-v1.2 in progress — item system & design renewal
+v1.2 complete — working on v1.3 IDE plugins
 If you like the idea, consider giving the repo a ⭐
