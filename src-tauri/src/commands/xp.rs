@@ -46,6 +46,15 @@ pub async fn get_streak_info(app: AppHandle) -> Result<StreakInfo, String> {
 pub async fn add_xp(app: AppHandle, amount: u32, source: String) -> Result<AddXpResult, String> {
     let mut data = storage::load(&app)?;
 
+    // 날짜 보정: today.date가 오늘이 아니면 리셋
+    let today_date = Local::now().format("%Y-%m-%d").to_string();
+    if data.today.date != today_date {
+        data.today = commit_cat_core::models::activity::DailySummary {
+            date: today_date,
+            ..Default::default()
+        };
+    }
+
     data.cat.exp += amount;
     let mut leveled_up = false;
 

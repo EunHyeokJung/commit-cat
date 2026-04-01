@@ -49,6 +49,9 @@ pub fn run() {
             // Initialize local data storage
             services::storage::init(&app_handle)?;
 
+            // 날짜가 바뀌었으면 DailySummary 리셋 (앱 시작 시 1회)
+            let _ = services::storage::check_daily_reset(&app_handle);
+
             // macOS 투명 윈도우 설정
             #[cfg(target_os = "macos")]
             if let Some(window) = app.get_webview_window("cat-overlay") {
