@@ -163,6 +163,11 @@ pub async fn add_xp(app: AppHandle, amount: u32, source: String) -> Result<AddXp
         }
     }
     if !newly_unlocked.is_empty() {
+        // 자동 장착: 현재 장착 중인 아이템이 없으면 첫 해금 아이템을 장착
+        if let Some(auto_hat) = commit_cat_core::items::auto_equip(&newly_unlocked, &data.cat.current_hat) {
+            data.cat.current_hat = Some(auto_hat.clone());
+            let _ = app.emit("hat:equipped", &auto_hat);
+        }
         let _ = app.emit("hat:unlocked", &newly_unlocked);
     }
 

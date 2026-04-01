@@ -19,6 +19,16 @@ pub const HATS: &[HatDefinition] = &[
     HatDefinition { id: "cornhead", name: "Corn Head", image: "assets/item/cornhead.png", unlock_condition: "30-day streak" },
 ];
 
+/// 첫 해금 시 자동 장착할 아이템인지 판별
+/// 현재 장착 중인 아이템이 없을 때만 자동 장착
+pub fn auto_equip(newly_unlocked: &[String], current_hat: &Option<String>) -> Option<String> {
+    if current_hat.is_some() || newly_unlocked.is_empty() {
+        return None;
+    }
+    // 첫 번째 해금 아이템을 자동 장착
+    Some(newly_unlocked[0].clone())
+}
+
 /// Check which hats should be newly unlocked based on current stats
 pub fn check_unlocks(
     level: u32,
