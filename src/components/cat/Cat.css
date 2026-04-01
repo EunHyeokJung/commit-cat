@@ -84,6 +84,11 @@
   height: calc(72px * 1.1 * 0.92);
 }
 
+.cat__image--orange.cat__image--sit,
+.cat__image--orange.cat__image--sleep {
+  height: calc(72px * 1.1 * 0.95);
+}
+
 .cat__image--brown {
   height: calc(72px * 1.12);
   margin-bottom: 2px;
