@@ -91,7 +91,7 @@
 
 .cat__image--brown.cat__image--sit,
 .cat__image--brown.cat__image--sleep {
-  height: calc(72px * 1.12 * 0.94 * 0.94);
+  height: calc(72px * 1.12 * 0.94 * 0.94 * 1.05);
 }
 
 /* grab 이미지 (드래그 시 1.8배 크기, 아래로 15px 이동) */
