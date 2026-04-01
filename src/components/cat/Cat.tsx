@@ -1147,7 +1147,7 @@ export function Cat() {
             const hatConfig: Record<string, { size: number; offsetY: number; offsetX: number }> = {
               party_hat:  { size: 28, offsetY: -24, offsetX: 0 },  // 28px 그룹
               cornhead:   { size: 28, offsetY: -24, offsetX: 0 },  // 28px 그룹
-              crown:      { size: 26, offsetY: -25, offsetX: 0 },  // 26px 그룹
+              crown:      { size: 26, offsetY: -20, offsetX: 0 },
               tophat:     { size: 26, offsetY: -25, offsetX: 0 },  // 26px 그룹
               tuna:       { size: 26, offsetY: -25, offsetX: 0 },  // 26px 그룹
               santahat:   { size: 30, offsetY: -24, offsetX: 2 },
