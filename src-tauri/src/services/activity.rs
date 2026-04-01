@@ -60,6 +60,11 @@ pub async fn start_monitor(app: AppHandle) {
             if !late_night_emitted {
                 let _ = app.emit("activity:late-night-coding", hour);
                 late_night_emitted = true;
+                // 심야 코딩 세션 카운트 증가 (아이템 해금 조건)
+                if let Ok(mut data) = crate::services::storage::load(&app) {
+                    data.cat.total_late_night_sessions += 1;
+                    let _ = crate::services::storage::save(&app, &data);
+                }
             }
         } else {
             late_night_emitted = false;
