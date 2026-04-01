@@ -25,7 +25,7 @@ async function notify(title: string, body: string) {
 const WIN_W = 200;
 const WIN_W_EXPANDED = 350;
 const DRAG_W = 250;
-const DRAG_H = 200;
+const DRAG_H = 250;
 
 const normalMessages = ["hey there~ 😺", "what's up? 🐾", "hi hi~ 💛", "oh, hello! 😸", "noticed me? 👀"];
 const happyMessages = ["that feels nice~ 💛", "more more! 😻", "you're the best 🥰", "hehe~ 😸"];
@@ -298,18 +298,28 @@ export function Cat() {
   const [itemDebug, setItemDebug] = useState(false);
   const [debugDeltas, setDebugDeltas] = useState<Record<string, { dy: number; dx: number }>>({});
   const debugStateKeyRef = useRef("");
-  const [savedAnchors, setSavedAnchors] = useState<Record<string, { y: number; x: number }>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("itemDebugAnchors") || "{}");
-    } catch { return {}; }
-  });
+  const confirmedDeltas = useRef<Record<string, { dy: number; dx: number }>>({});
+  const [debugForceState, setDebugForceState] = useState<string>("");
 
   // Settings에서 디버그 토글 이벤트 수신
   useEffect(() => {
     const unlisten = listen<boolean>("item:debug", (event) => {
       const next = event.payload;
       setItemDebug(next);
-      if (next) setDebugDeltas({});
+      if (next) {
+        setDebugDeltas({});
+        confirmedDeltas.current = {};
+      } else {
+        setDebugForceState("");
+      }
+    });
+    return () => { unlisten.then(fn => fn()); };
+  }, []);
+
+  // Settings에서 강제 상태 변경 수신
+  useEffect(() => {
+    const unlisten = listen<string>("item:debug:forceState", (event) => {
+      setDebugForceState(event.payload);
     });
     return () => { unlisten.then(fn => fn()); };
   }, []);
@@ -330,34 +340,25 @@ export function Cat() {
       if (dir === "left") setDebugDeltas(d => ({ ...d, [key]: { dy: d[key]?.dy ?? 0, dx: (d[key]?.dx ?? 0) - step } }));
       if (dir === "right") setDebugDeltas(d => ({ ...d, [key]: { dy: d[key]?.dy ?? 0, dx: (d[key]?.dx ?? 0) + step } }));
 
+      // Enter: 현재 delta를 확정 → headAnchor + delta = 최종 코드 값으로 출력
       if (dir === "enter") {
         setDebugDeltas(cur => {
           const delta = cur[key];
           if (!delta || (delta.dy === 0 && delta.dx === 0)) return cur;
-          setSavedAnchors(prev => {
-            const base = prev[key];
-            const newAnchor = base
-              ? { y: base.y + delta.dy, x: base.x + delta.dx }
-              : { y: delta.dy, x: delta.dx };
-            const updated = { ...prev, [key]: newAnchor };
-            localStorage.setItem("itemDebugAnchors", JSON.stringify(updated));
-            // Settings에 저장 알림
-            emit("item:debug:saved", `${key}: { y: ${newAnchor.y}, x: ${newAnchor.x} }`);
-            return updated;
-          });
+          // confirmed에 누적
+          const prev = confirmedDeltas.current[key] ?? { dy: 0, dx: 0 };
+          confirmedDeltas.current[key] = { dy: prev.dy + delta.dy, dx: prev.dx + delta.dx };
+          // Settings에 확정된 전체 값 전송
+          emit("item:debug:saved", JSON.stringify(confirmedDeltas.current));
           return { ...cur, [key]: { dy: 0, dx: 0 } };
         });
       }
 
+      // R: 현재 상태 리셋
       if (dir === "reset") {
-        setSavedAnchors(prev => {
-          const updated = { ...prev };
-          delete updated[key];
-          localStorage.setItem("itemDebugAnchors", JSON.stringify(updated));
-          emit("item:debug:saved", `${key}: 리셋됨`);
-          return updated;
-        });
+        delete confirmedDeltas.current[key];
         setDebugDeltas(d => ({ ...d, [key]: { dy: 0, dx: 0 } }));
+        emit("item:debug:saved", JSON.stringify(confirmedDeltas.current));
       }
     });
     return () => { unlisten.then(fn => fn()); };
@@ -1086,33 +1087,36 @@ export function Cat() {
             alt="cat"
             draggable={false}
           />
-          {currentHat && !showPettingImg && (() => {
+          {currentHat && !showPettingImg && !isDragging && (() => {
             // ─── Head Anchor 시스템 ───
             // 각 색상×상태별 머리 중심 좌표 (컨테이너 top-left 기준)
             // 이 좌표만 맞추면 모든 아이템이 자동 배치됨
             const headAnchor: Record<string, Record<string, { y: number; x: number }>> = {
               white: {
-                stand:       { y: 22, x: 55 },
-                walk:        { y: 16, x: 55 },
-                sit:         { y: 30, x: 55 },
-                sleep:       { y: 35, x: 57 },
+                stand:       { y: 28, x: 29 },
+                walk:        { y: 26, x: 27 },
+                sit:         { y: 36, x: 29 },
+                sleep:       { y: 37, x: 31 },
                 grab:        { y: -25, x: 52 },
+                petting:     { y: 55, x: 30 },
                 celebrating: { y: 18, x: 55 },
               },
               orange: {
-                stand:       { y: 15, x: 55 },
-                walk:        { y: 20, x: 55 },
-                sit:         { y: 22, x: 55 },
-                sleep:       { y: 28, x: 57 },
+                stand:       { y: 23, x: 27 },
+                walk:        { y: 28, x: 25 },
+                sit:         { y: 30, x: 29 },
+                sleep:       { y: 28, x: 30 },
                 grab:        { y: -28, x: 52 },
+                petting:     { y: 50, x: 28 },
                 celebrating: { y: 12, x: 55 },
               },
               brown: {
-                stand:       { y: 21, x: 49 },
-                walk:        { y: 18, x: 39 },
-                sit:         { y: 27, x: 39 },
-                sleep:       { y: 24, x: 49 },
-                grab:        { y: -30, x: 52 },
+                stand:       { y: 21, x: 23 },
+                walk:        { y: 21, x: 23 },
+                sit:         { y: 22, x: 25 },
+                sleep:       { y: 23, x: 29 },
+                grab:        { y: -12, x: 53 },
+                petting:     { y: 26, x: 26 },
                 celebrating: { y: 10, x: 55 },
               },
             };
@@ -1120,8 +1124,8 @@ export function Cat() {
             // 아이템별 크기 + 머리 중심 기준 오프셋
             const hatConfig: Record<string, { size: number; offsetY: number; offsetX: number }> = {
               party_hat:  { size: 28, offsetY: -24, offsetX: 0 },
-              wizard:     { size: 32, offsetY: -28, offsetX: 0 },
-              crown:      { size: 26, offsetY: -20, offsetX: 0 },
+              wizard:     { size: 32, offsetY: -23, offsetX: 0 },
+              crown:      { size: 26, offsetY: -25, offsetX: 0 },
               tophat:     { size: 26, offsetY: -24, offsetX: 0 },
               santahat:   { size: 30, offsetY: -24, offsetX: 2 },
               sunglass:   { size: 24, offsetY: -6,  offsetX: 0 },
@@ -1129,30 +1133,38 @@ export function Cat() {
               cornhead:   { size: 28, offsetY: -22, offsetX: 0 },
             };
 
-            const currentState = isDragging ? "grab"
+            // 디버그 강제 상태 또는 실제 상태
+            const currentState = (itemDebug && debugForceState) ? debugForceState
+              : isDragging ? "grab"
+              : showPettingImg ? "petting"
               : catState === "celebrating" ? "celebrating"
               : behavior === "sleep" ? "sleep"
               : behavior === "sit" ? "sit"
-              : behavior === "walk" ? "walk"
+              : (behavior === "walk" && frame === 1) ? "walk"
               : "stand";
 
-            const baseAnchor = headAnchor[catColor]?.[currentState] ?? { y: 20, x: 55 };
-            const cfg = hatConfig[currentHat] ?? { size: 28, offsetY: -22, offsetX: 0 };
+            const anchor = headAnchor[catColor]?.[currentState] ?? { y: 20, x: 55 };
+            const baseCfg = hatConfig[currentHat] ?? { size: 28, offsetY: -22, offsetX: 0 };
+            // 아이템별 상태 보정 (특정 아이템이 특정 상태에서만 추가 오프셋 필요할 때)
+            const hatStateOverride: Record<string, Record<string, { dy: number; dx: number }>> = {
+              crown: { grab: { dy: 0, dx: 0 } },
+            };
+            const override = hatStateOverride[currentHat]?.[currentState] ?? { dy: 0, dx: 0 };
+            const cfg = { ...baseCfg, offsetY: baseCfg.offsetY + override.dy, offsetX: baseCfg.offsetX + override.dx };
 
-            // localStorage 저장값 적용
+            // 디버그 모드: confirmed + 현재 delta 적용
             const stateKey = `${catColor}/${currentState}`;
             debugStateKeyRef.current = stateKey;
-            const saved = savedAnchors[stateKey] ?? { y: 0, x: 0 };
-            const anchor = { y: baseAnchor.y + saved.y, x: baseAnchor.x + saved.x };
-
-            // 디버그 모드: 추가 delta
+            const confirmed = itemDebug ? (confirmedDeltas.current[stateKey] ?? { dy: 0, dx: 0 }) : { dy: 0, dx: 0 };
             const delta = itemDebug ? (debugDeltas[stateKey] ?? { dy: 0, dx: 0 }) : { dy: 0, dx: 0 };
 
-            const finalY = anchor.y + cfg.offsetY + delta.dy;
-            const finalX = anchor.x + cfg.offsetX - cfg.size / 2 + delta.dx;
+            const finalY = anchor.y + cfg.offsetY + confirmed.dy + delta.dy;
+            const finalX = anchor.x + cfg.offsetX - cfg.size / 2 + confirmed.dx + delta.dx;
 
             if (itemDebug) {
-              console.log(`[ItemDebug] ${stateKey} | 기본: {y:${baseAnchor.y}, x:${baseAnchor.x}} + 저장: {y:${saved.y}, x:${saved.x}} + delta: {dy:${delta.dy}, dx:${delta.dx}} → 최종 앵커: {y:${anchor.y + delta.dy}, x:${anchor.x + delta.dx}}`);
+              const totalDy = confirmed.dy + delta.dy;
+              const totalDx = confirmed.dx + delta.dx;
+              console.log(`[ItemDebug] ${stateKey} | anchor: {y:${anchor.y}, x:${anchor.x}} + total delta: {dy:${totalDy}, dx:${totalDx}} → 코드 반영 값: { y: ${anchor.y + totalDy}, x: ${anchor.x + totalDx} }`);
             }
 
             return (

@@ -190,7 +190,7 @@ export function Settings() {
   const [unlockedHats, setUnlockedHats] = useState<string[]>([]);
   const [itemDebugMode, setItemDebugMode] = useState(false);
   const [debugLog, setDebugLog] = useState("");
-  const [allSavedAnchors, setAllSavedAnchors] = useState<Record<string, { y: number; x: number }>>({});
+  const [allSavedAnchors, setAllSavedAnchors] = useState<Record<string, { dy: number; dx: number }>>({});
 
   // 디버그 모드: 키보드 → Cat 윈도우로 전달
   useEffect(() => {
@@ -208,25 +208,20 @@ export function Settings() {
     return () => window.removeEventListener("keydown", handler);
   }, [itemDebugMode]);
 
-  // 디버그 저장 결과 수신 + 전체 목록 갱신
+  // 디버그 확정 결과 수신
   useEffect(() => {
     const unlisten = listen<string>("item:debug:saved", (event) => {
-      setDebugLog(event.payload);
       try {
-        setAllSavedAnchors(JSON.parse(localStorage.getItem("itemDebugAnchors") || "{}"));
-      } catch { /* */ }
+        const deltas = JSON.parse(event.payload) as Record<string, { dy: number; dx: number }>;
+        setAllSavedAnchors(deltas);
+        const entries = Object.entries(deltas).map(([k, v]) => `${k}(${v.dy},${v.dx})`).join(" ");
+        setDebugLog(entries || "리셋됨");
+      } catch {
+        setDebugLog(event.payload);
+      }
     });
     return () => { unlisten.then(fn => fn()); };
   }, []);
-
-  // 디버그 모드 ON 시 저장된 앵커 로드
-  useEffect(() => {
-    if (itemDebugMode) {
-      try {
-        setAllSavedAnchors(JSON.parse(localStorage.getItem("itemDebugAnchors") || "{}"));
-      } catch { /* */ }
-    }
-  }, [itemDebugMode]);
 
   const refreshCodexStatus = useCallback(async () => {
     setCodexChecking(true);
@@ -868,13 +863,33 @@ export function Settings() {
             {itemDebugMode ? "🔴 Debug ON — ↑↓←→: 이동 (Shift=5px) / Enter: 저장 / R: 리셋" : "Item Debug Mode"}
           </button>
           {itemDebugMode && (
+            <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 11, color: "#aaa" }}>강제 상태:</span>
+              <select
+                onChange={(e) => emit("item:debug:forceState", e.target.value)}
+                style={{
+                  fontSize: 11, background: "#1a1a2e", color: "#fff",
+                  border: "1px solid #555", borderRadius: 4, padding: "2px 4px",
+                }}
+              >
+                <option value="">자동</option>
+                <option value="stand">stand</option>
+                <option value="walk">walk</option>
+                <option value="sit">sit</option>
+                <option value="sleep">sleep</option>
+                <option value="grab">grab</option>
+                <option value="petting">petting</option>
+              </select>
+            </div>
+          )}
+          {itemDebugMode && (
             <div style={{ marginTop: 6, fontSize: 10, fontFamily: "monospace" }}>
               {debugLog && (
                 <div style={{ color: "#4f4", marginBottom: 4 }}>✅ {debugLog}</div>
               )}
               {Object.keys(allSavedAnchors).length > 0 && (
                 <div style={{ background: "#1a1a2e", borderRadius: 4, padding: 6, border: "1px solid #333" }}>
-                  <div style={{ color: "#aaa", marginBottom: 3 }}>저장된 앵커:</div>
+                  <div style={{ color: "#aaa", marginBottom: 3 }}>확정된 delta (Enter로 코드 반영 요청):</div>
                   {["brown", "orange", "white"].map(color => {
                     const entries = Object.entries(allSavedAnchors).filter(([k]) => k.startsWith(color + "/"));
                     if (entries.length === 0) return null;
@@ -884,7 +899,7 @@ export function Settings() {
                         {": "}
                         {entries.map(([k, v]) => (
                           <span key={k} style={{ color: "#8f8", marginRight: 6 }}>
-                            {k.split("/")[1]}({v.y},{v.x})
+                            {k.split("/")[1]}(dy:{v.dy},dx:{v.dx})
                           </span>
                         ))}
                       </div>
